@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, useScroll, useMotionValueEvent } from "framer-motion";
 import DetailModal, { DetailData } from "@/components/DetailModal";
 import sencyDb from "../public/sency_db.json";
@@ -198,6 +198,177 @@ const generateCards = () => {
       };
     }
   });
+};
+
+// ============================================
+// 모바일 전용: 스와이프 카드 — 개별 카드
+// ============================================
+const MobileCard = ({
+  card,
+  direction,
+  onNext,
+  onPrev,
+  onOpenModal,
+  index,
+  total,
+}: {
+  card: CardItem;
+  direction: number;
+  onNext: () => void;
+  onPrev: () => void;
+  onOpenModal: () => void;
+  index: number;
+  total: number;
+}) => {
+  const { images } = useCardImages(card.detail?.cardId);
+  const thumbnailSrc = images[0];
+
+  const variants = {
+    enter: (dir: number) => ({ x: dir >= 0 ? "100%" : "-100%", opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: dir >= 0 ? "-100%" : "100%", opacity: 0 }),
+  };
+
+  const dragStartX = useRef(0);
+
+  const handleDragStart = (_: unknown, info: { point: { x: number } }) => {
+    dragStartX.current = info.point.x;
+  };
+
+  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (info.offset.x < -55) onNext();
+    else if (info.offset.x > 55) onPrev();
+  };
+
+  return (
+    <motion.div
+      custom={direction}
+      variants={variants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.12}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className="absolute inset-0 flex flex-col px-6 pt-10 pb-28"
+      style={{ touchAction: "pan-y" }}
+    >
+      {/* 상단: card ID */}
+      <span className="text-[9px] tracking-[0.22em] font-mono text-[var(--color-foreground)] uppercase opacity-40 mb-6 block select-none">
+        {card.detail?.cardId}
+      </span>
+
+      {/* 이미지 영역 — 원본 비율, 화면 중앙 */}
+      <div
+        className="flex-1 flex items-center justify-center overflow-hidden"
+        onClick={thumbnailSrc ? onOpenModal : undefined}
+        style={{ cursor: thumbnailSrc ? "pointer" : "default" }}
+      >
+        {thumbnailSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={thumbnailSrc}
+            alt=""
+            className="max-w-full max-h-full object-contain select-none pointer-events-none"
+            draggable={false}
+          />
+        ) : card.type === "text" ? (
+          <div className="w-full px-2 text-center">
+            <p className="text-base font-serif leading-[1.8] text-[var(--color-foreground)] break-keep opacity-80">
+              {card.text}
+            </p>
+          </div>
+        ) : (
+          <div className="w-full h-40 bg-[var(--color-foreground)]/8 flex items-center justify-center">
+            <span className="text-[10px] font-mono opacity-20 tracking-widest text-[var(--color-foreground)]">NO IMAGE</span>
+          </div>
+        )}
+      </div>
+
+      {/* 하단: 이름 + 메타 + 모달 버튼 */}
+      <div className="mt-7 mb-5 flex flex-col gap-1.5">
+        <button onClick={onOpenModal} className="text-left group">
+          <h2 className="text-lg font-serif tracking-tight leading-[1.2] uppercase break-keep text-[var(--color-foreground)] group-active:opacity-70 transition-opacity">
+            {card.detail?.name}
+          </h2>
+        </button>
+        <div className="flex gap-2.5 font-mono text-[10px] text-[var(--color-foreground)] opacity-45 uppercase tracking-widest">
+          {card.detail?.year && <span>{card.detail.year}</span>}
+          {card.detail?.layer && <span>· {card.detail.layer}</span>}
+          {card.detail?.intensity && <span>· {card.detail.intensity}</span>}
+        </div>
+      </div>
+
+      {/* 진행 표시 */}
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[9px] font-mono text-[var(--color-foreground)] opacity-35 tracking-widest select-none">
+            {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          </span>
+          <span className="text-[9px] font-mono text-[var(--color-foreground)] opacity-25 tracking-widest select-none">
+            ← swipe →
+          </span>
+        </div>
+        <div className="w-full h-px bg-[var(--color-foreground)]/15">
+          <motion.div
+            className="h-full bg-[var(--color-foreground)]/50"
+            animate={{ width: `${((index + 1) / total) * 100}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// 모바일 전용: 스와이프 카드 — 컨테이너
+// ============================================
+const MobileListView = ({
+  cardsData,
+  onCardClick,
+}: {
+  cardsData: CardItem[];
+  onCardClick: (card: CardItem) => void;
+}) => {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const goNext = useCallback(() => {
+    if (current < cardsData.length - 1) {
+      setDirection(1);
+      setCurrent((c) => c + 1);
+    }
+  }, [current, cardsData.length]);
+
+  const goPrev = useCallback(() => {
+    if (current > 0) {
+      setDirection(-1);
+      setCurrent((c) => c - 1);
+    }
+  }, [current]);
+
+  const card = cardsData[current];
+
+  return (
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-[var(--color-background)]">
+      <AnimatePresence mode="wait" custom={direction}>
+        <MobileCard
+          key={current}
+          card={card}
+          direction={direction}
+          onNext={goNext}
+          onPrev={goPrev}
+          onOpenModal={() => onCardClick(card)}
+          index={current}
+          total={cardsData.length}
+        />
+      </AnimatePresence>
+    </div>
+  );
 };
 
 // ============================================
@@ -942,9 +1113,18 @@ const MobileAccordion = ({ card, cardId }: { card: CardItem; cardId: string }) =
 export default function Home() {
   const [viewMode, setViewMode] = useState<"landing" | "list" | "moodboard" | "note" | "index">("landing");
   const [selectedCard, setSelectedCard] = useState<CardItem | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 방대한 카드를 원하셨으므로 CSV 데이터 전체를 매핑합니다.
   const cardsData = useMemo(() => generateCards(), []);
+
+  // 모바일 감지 (768px 미만 = 모바일)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   return (
     <>
@@ -969,7 +1149,9 @@ export default function Home() {
       {viewMode === "landing" && <LandingView onNavigate={setViewMode} />}
 
       {viewMode === "list" && (
-        <ListView cardsData={cardsData} onCardClick={setSelectedCard} />
+        isMobile
+          ? <MobileListView cardsData={cardsData} onCardClick={setSelectedCard} />
+          : <ListView cardsData={cardsData} onCardClick={setSelectedCard} />
       )}
 
       {viewMode === "moodboard" && (
