@@ -1086,9 +1086,9 @@ function NoteSection() {
 
                 {/* 2. 본문 */}
                 <div className="flex flex-col">
-                  <div className="text-[13px] sm:text-[14.5px] leading-[1.8] sm:leading-[1.95] font-serif text-justify break-keep whitespace-pre-wrap">
+                  <span className="block text-[13px] sm:text-[14.5px] leading-[1.8] sm:leading-[1.95] font-serif text-justify break-keep whitespace-pre-wrap">
                     {item.note}
-                  </div>
+                  </span>
                   {/* 모바일에서의 주석 배치 (LG 미만) */}
                   {item.side && (
                     <div className="mt-6 flex flex-col gap-3 lg:hidden p-4 bg-[#4e0000]/[0.03] border-l border-[#4e0000]/20">
