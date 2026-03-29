@@ -263,7 +263,7 @@ const MobileCard = ({
 
       {/* 이미지 영역 — 원본 비율, 화면 중앙 */}
       <div
-        className="flex-1 flex items-center justify-center overflow-hidden"
+        className="flex-1 flex items-center justify-center overflow-hidden relative"
         onClick={thumbnailSrc ? onOpenModal : undefined}
         style={{ cursor: thumbnailSrc ? "pointer" : "default" }}
       >
@@ -285,6 +285,32 @@ const MobileCard = ({
           <div className="w-full h-40 bg-[var(--color-foreground)]/8 flex items-center justify-center">
             <span className="text-[10px] font-mono opacity-20 tracking-widest text-[var(--color-foreground)]">NO IMAGE</span>
           </div>
+        )}
+
+        {/* 탭 힌트 아이콘 — 이미지 우측 하단, 처음엔 선명하게 후 페이드 */}
+        {thumbnailSrc && (
+          <motion.div
+            className="absolute bottom-2 right-2 flex items-center gap-1 pointer-events-none select-none"
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: [0.85, 0.85, 0.2] }}
+            transition={{ duration: 2.2, times: [0, 0.5, 1], ease: "easeOut", delay: 0.3 }}
+          >
+            {/* expand / view 아이콘 (SVG inline) */}
+            <svg
+              width="13" height="13" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="1.6"
+              strokeLinecap="round" strokeLinejoin="round"
+              className="text-[var(--color-foreground)]"
+            >
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+            <span className="text-[8px] font-mono tracking-[0.18em] uppercase text-[var(--color-foreground)]">
+              view
+            </span>
+          </motion.div>
         )}
       </div>
 
@@ -576,6 +602,139 @@ const ListCard = ({
 };
 
 // ============================================
+// 모바일 전용: 스크롤 Reveal 무드보드 — 개별 카드
+// ============================================
+const MobileScrollCard = ({
+  card,
+  onCardClick,
+}: {
+  card: CardItem;
+  onCardClick: (card: CardItem) => void;
+}) => {
+  const { images } = useCardImages(card.detail?.cardId);
+  const thumbnailSrc = images[0];
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [avgColor, setAvgColor] = useState("#f0ede4");
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 뷰포트 진입 시 reveal
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsRevealed(true);
+          observer.disconnect(); // 한 번 reveal되면 해제
+        }
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -40px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // 이미지 평균 컬러 추출 (플레이스홀더 배경)
+  useEffect(() => {
+    if (!thumbnailSrc) return;
+    const img = new window.Image();
+    img.crossOrigin = "Anonymous";
+    img.src = thumbnailSrc;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1; canvas.height = 1;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        setAvgColor(`rgb(${r}, ${g}, ${b})`);
+      }
+    };
+  }, [thumbnailSrc]);
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={() => onCardClick(card)}
+      className="w-full mb-1.5 cursor-pointer overflow-hidden"
+      style={{ backgroundColor: avgColor }}
+    >
+      {card.type === "image" && thumbnailSrc ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isRevealed ? 1 : 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={thumbnailSrc}
+            alt=""
+            className="w-full h-auto block select-none pointer-events-none"
+            draggable={false}
+          />
+        </motion.div>
+      ) : card.type === "image" ? (
+        // 이미지 로딩 전 플레이스홀더
+        <div className="w-full aspect-[3/4] bg-[#f0ede4]" />
+      ) : (
+        <div className="w-full p-4 bg-[#fdfdfc] flex items-start" style={{ minHeight: "100px" }}>
+          <p className="text-[11px] font-serif leading-[1.75] text-[#1a1a1a] break-keep line-clamp-5">
+            {card.text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================
+// 모바일 전용: 스크롤 Reveal 무드보드 — 컨테이너
+// ============================================
+const MobileMoodboardView = ({
+  cardsData,
+  onCardClick,
+}: {
+  cardsData: CardItem[];
+  onCardClick: (card: CardItem) => void;
+}) => {
+  // 2열 column layout을 위한 홀수/짝수 분리
+  const leftCol = cardsData.filter((_, i) => i % 2 === 0);
+  const rightCol = cardsData.filter((_, i) => i % 2 === 1);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full min-h-screen bg-[#f7f4e9] pt-16 pb-28 px-1.5"
+    >
+      <div className="flex gap-1.5 items-start">
+        {/* 왼쪽 열 */}
+        <div className="flex-1 flex flex-col gap-1.5">
+          {leftCol.map((card, i) => (
+            <MobileScrollCard
+              key={card.detail?.cardId || `left-${i}`}
+              card={card}
+              onCardClick={onCardClick}
+            />
+          ))}
+        </div>
+        {/* 오른쪽 열 — 자연스러운 엇갈림을 위해 상단 여백 추가 */}
+        <div className="flex-1 flex flex-col gap-1.5 mt-8">
+          {rightCol.map((card, i) => (
+            <MobileScrollCard
+              key={card.detail?.cardId || `right-${i}`}
+              card={card}
+              onCardClick={onCardClick}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
 // 뷰 컴포넌트 2: 자유로운 마우스 드래그 무드보드 (Moodboard View)
 // ============================================
 
@@ -826,7 +985,7 @@ function NoteSection() {
           </h2>
           <div className="flex flex-col w-full">
             <div className="flex justify-start sm:justify-end pt-2 sm:pt-4 w-full">
-              <span className="text-[13px] sm:text-[14px] tracking-[0.1em] font-light">
+              <span className="text-[12px] sm:text-[12px] tracking-[0.1em] font-light">
                 ‘먼 바다로 떠난 이야기’ 중, &lt;세상의 발견&gt;, 클라리시 리스펙토르
               </span>
             </div>
@@ -1155,7 +1314,9 @@ export default function Home() {
       )}
 
       {viewMode === "moodboard" && (
-        <MoodboardView cardsData={cardsData} onCardClick={setSelectedCard} />
+        isMobile
+          ? <MobileMoodboardView cardsData={cardsData} onCardClick={setSelectedCard} />
+          : <MoodboardView cardsData={cardsData} onCardClick={setSelectedCard} />
       )}
 
       {viewMode === "note" && <NoteView />}
