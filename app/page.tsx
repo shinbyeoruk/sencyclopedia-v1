@@ -457,7 +457,7 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
   }, [cardsData]);
 
   return (
-    <div className="relative w-full text-foreground max-w-[100vw] overflow-x-hidden bg-[#FCDE76]" style={{ height: "300000px" }}>
+    <div className="relative w-full text-foreground max-w-[100vw] overflow-x-hidden bg-[#FFFFFF]" style={{ height: "300000px" }}>
       <style dangerouslySetInnerHTML={{
         __html: `
         .list-card-hitbox {
@@ -716,7 +716,7 @@ const MobileMoodboardView = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full min-h-screen bg-[#E9F056] pt-28 pb-28 px-1.5"
+      className="w-full min-h-screen bg-[#FFFFFF] pt-28 pb-28 px-1.5"
     >
       <div className="flex gap-1.5 items-start">
         {/* 왼쪽 열 */}
@@ -770,7 +770,7 @@ const MoodboardView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCa
         mouseX.set(e.pageX);
         mouseY.set(e.pageY);
       }}
-      className="moodboard-container bg-[#E9F056] w-full min-h-[100vh] pt-32 pb-32 px-4 sm:px-8 md:px-12"
+      className="moodboard-container bg-[#FFFFFF] w-full min-h-[100vh] pt-32 pb-32 px-4 sm:px-8 md:px-12"
     >
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: "url('/analog_art_1.png')", backgroundSize: "cover", mixBlendMode: "multiply" }} />
 
@@ -1182,17 +1182,22 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
       className="w-full min-h-[100dvh] pt-32 pb-12 px-4 sm:px-8 flex flex-col bg-[var(--color-background)] text-[var(--color-foreground)]"
     >
       {/* 1. 타이틀 섹션 — 스크롤 시 먼저 밀려 올라감 */}
-      <div className="flex flex-col mb-[18px] max-w-[1600px] w-full mx-auto px-4 sm:px-0">
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-sans tracking-widest uppercase mb-6 text-[var(--color-foreground)] leading-tight">
+      <div className="flex flex-col mb-[24px] max-w-[1600px] w-full mx-auto px-4 sm:px-0">
+        <h1 className="text-[10vw] sm:text-8xl md:text-9xl font-serif tracking-[0.02em] uppercase mb-8 text-[#FCDE76] leading-[0.85]">
           SENCYCLOPEDIA <br className="sm:hidden" />
-          <span className="opacity-40">INDEX</span>
+          <span className="text-[#845f2a]">INDEX</span>
         </h1>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-[var(--color-foreground)]/40 pb-10">
-          <p className="text-[10px] sm:text-xs tracking-widest uppercase font-mono leading-relaxed opacity-70 max-w-xl">
-            └ WORK INDEX <br />
-            * a curated collection of sensory data → including images, text, ideas, and memories *
-          </p>
-          <div className="text-[9px] sm:text-[10px] tracking-widest text-left sm:text-right font-mono opacity-60">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-8 border-b border-[#FCDE76]/30 pb-12">
+          <div className="flex flex-col gap-1">
+            <p className="text-[10px] sm:text-[11px] tracking-[0.1em] uppercase font-mono leading-normal text-[#FCDE76]">
+              └ WORK INDEX
+            </p>
+            <p className="text-[10px] sm:text-[11px] tracking-[0.05em] uppercase font-mono leading-relaxed text-[#FCDE76] max-w-2xl">
+              * A CURATED COLLECTION OF SENSORY DATA → INCLUDING IMAGES, TEXT, IDEAS, <br className="hidden sm:block" />
+              AND MEMORIES *
+            </p>
+          </div>
+          <div className="text-[10px] sm:text-[11px] tracking-[0.1em] text-left sm:text-right font-mono text-[#FCDE76] leading-relaxed">
             ┌ LEGEND<br />
             ■ IMG / MIX<br />
             ○ TXT
@@ -1435,7 +1440,7 @@ export default function Home() {
           <div
             className="w-10 sm:w-12 h-10 sm:h-12 transition-colors duration-300"
             style={{
-              backgroundColor: (viewMode === 'index' || (viewMode === 'list' && isMobile)) ? '#FCDE76' : '#4e0000',
+              backgroundColor: (viewMode === 'index') ? '#FCDE76' : '#4e0000',
               maskImage: 'url(/miro.png)',
               maskSize: 'contain',
               maskRepeat: 'no-repeat',
