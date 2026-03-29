@@ -127,23 +127,27 @@ const ColorBlockCard = ({
       animate={{ opacity: 1 }}
       className="relative w-full cursor-pointer overflow-hidden hover:shadow-2xl transition-shadow"
       style={{
-        height,
+        // 이미지가 있으면 원본 비율, 없으면 랜덤 height 유지
+        height: (card.type === "image" && thumbnailSrc) ? "auto" : height,
         backgroundColor: avgColor,
       }}
     >
-      <motion.div 
-        className="w-full h-full relative"
+      <motion.div
+        className="w-full relative"
         style={{ opacity }}
         transition={{ duration: 0.3 }}
       >
         {card.type === "image" && thumbnailSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={thumbnailSrc} alt="Moodboard Art" className="w-full h-full object-cover select-none pointer-events-none" />
+          <img
+            src={thumbnailSrc}
+            alt="Moodboard Art"
+            className="w-full h-auto block select-none pointer-events-none"
+          />
         ) : card.type === "image" ? (
-          // 이미지 없는 image 타입 (TXT 카드 등) — 빈 블록
-          <div className="w-full h-full bg-[#f0ede4]" />
+          <div className="w-full bg-[#f0ede4]" style={{ height }} />
         ) : (
-          <div className="w-full h-full p-4 flex items-center justify-center bg-[#fdfdfc] border border-[--color-background]/10">
+          <div className="w-full p-4 flex items-center justify-center bg-[#fdfdfc] border border-[--color-background]/10" style={{ height }}>
             <p className="text-[--color-background] font-serif text-[10px] md:text-sm leading-relaxed text-justify break-keep pointer-events-none select-none">
               {card.text ? (card.text.length > 50 ? card.text.slice(0, 50) + "..." : card.text) : ""}
             </p>
@@ -362,7 +366,7 @@ const ListCard = ({
         }}
       >
         <div
-          className="list-card-visual rounded-sm overflow-hidden shadow-[0_12px_36px_-9px_rgba(0,0,0,0.25)] bg-[#fdfdfc] flex flex-col border border-black/5 will-change-transform pointer-events-none relative"
+          className="list-card-visual overflow-hidden shadow-[0_12px_36px_-9px_rgba(0,0,0,0.25)] bg-[#fdfdfc] flex flex-col will-change-transform pointer-events-none relative"
           style={{ width: "245px" }}
         >
           {card.type === "image" && thumbnailSrc ? (
