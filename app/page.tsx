@@ -165,7 +165,7 @@ const generateCards = () => {
     const nameKey = Object.keys(row).find(k => k.includes('이름')) || '이름';
     // 모든 키값과 밸류에 대한 정규화 (BOM 및 공백 제거)
     const normalize = (val: any) => typeof val === 'string' ? val.trim() : val;
-    
+
     const detail: DetailData = {
       name: normalize(row[nameKey] || ""),
       comment: normalize(row['2025 코멘트'] || ""),
@@ -908,7 +908,7 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
                 <span key={i} className="select-none">{letter}</span>
               ))}
             </div>
-          <div className="w-full h-[20vh]"></div>
+            <div className="w-full h-[20vh]"></div>
           </div>
 
           <div className="absolute bottom-6 left-0 w-full flex justify-center text-center z-10 opacity-30 pointer-events-none">
@@ -979,64 +979,162 @@ const NavigationFooter = ({ viewMode, onNavigate }: { viewMode: string, onNaviga
 // ============================================
 
 function NoteSection() {
+  const romanNumbers = ["I", "II", "III", "IV", "V", "VI", "VII"];
+
+  // 본문과 주석을 하나의 구조로 묶어 관리 (행간 주석 배치를 위함)
+  const items = [
+    {
+      note: "이 사전은 완성된 적이 없으며, 완성될 수도 없다.",
+      side: null
+    },
+    {
+      note: "백감사전(Sencyclopedia)은 감각(Sense)과 백과사전(Encyclopedia)의 합성어로, 2014년부터 2024년까지, 아직 무엇이라고 불리기 이전의 감각을 수집하고 분류한 아카이브다. 편집되지 않았다는 것이 이 사전의 유일한 편집 방침이며, 따라서 과잉된 정동은 여과 없이 포착된다.¹⁾",
+      side: "¹⁾ 이 점에서 백감사전은 사전이라기보다 일종의 발굴 보고서에 가깝다. 다만 발굴의 대상이 과거가 아니라 아직 이름 붙여지지 않은 현재라는 점에서 통상적인 고고학과는 다르다. 고고학자가 파편에서 문명을 추론하듯, 이 사전의 편찬자는 감각의 파편에서 한 사람의 삶을 추론한다. 비록 그 사람이 자기 자신이라 할지라도."
+    },
+    {
+      note: "각 항목은 '감각 카드'의 형태를 취한다. 카드는 사진과 텍스트, 그리고 다섯 가지 속성 — 레이어, 연도, 강도, 장소, 형식 — 으로 구성되며, 고유한 감각 코드 ID²⁾로 식별된다. 무한한 도서관에 두 권의 동일한 책이 없듯, 이 사전에서 모든 감각은 고유하다. 반복되는 것은 없으며, 그럼에도 모든 것은 반복된다.",
+      side: "²⁾ 예컨대 하나의 카드는 `U-2017-006-M-IMG`와 같은 코드를 부여받는다. 이 체계는 도서관의 청구기호를 닮았으나, 분류하는 것은 책이 아니라 신체가 겪은 사건이다. 어떤 분류 체계든 그것이 분류하는 것의 일부를 반드시 배반한다는 사실은, 이 사전에서도 예외가 아니다."
+    },
+    {
+      note: "이 프로젝트는 \"일상은 예술이 될 수 있을까\"라는 질문에서 출발한다. 개인의 삶 속에 출몰하는 강도를 탐구하고 그것을 드라마화하는 예술적 실험이자, 10년의 삶을 갈무리하는 하나의 의식(ritual)이다. 삶을 기록하는 행위가 삶의 일부가 되고, 그 일부가 다시 기록되어야 한다는 점에서, 이 사전은 자기 자신을 항목으로 포함하는 목록과 같은 종류의 역설에 속한다.",
+      side: null
+    },
+    {
+      note: "감각 카드가 포착하는 것은 현행화된 강도뿐이다 — 우리가 인지할 수 있는 것은 오직 현행화된 것뿐이므로.³⁾ 그러나 이 작업은 포착된 것 너머, 강도가 다시 어디로 흘러가는지를 더듬으며, 기관 없는 신체를 어렴풋이 가늠해보려는 시도이기도 하다. 지도가 영토를 대신할 수 없듯, 카드는 감각을 대신하지 못한다. 다만 한 사람의 신체 안에서 끊임없이 발생하고 있는 창조적 순간들을 기념할 수는 있다.",
+      side: "³⁾ 들뢰즈의 용법을 따른다. 강도(intensité)는 현행화(actualisation)를 통해서만 경험되지만, 현행화된 순간 이미 그것은 원래의 강도와 같지 않다. 거울이 얼굴을 비추되 얼굴 그 자체는 아닌 것처럼. 이 불가피한 간극이 이 사전의 조건이자 한계이다."
+    },
+    {
+      note: "2025년 4월, 난항 콜렉티브⁴⁾에서 첫 시연이 이루어졌다. 진행은 다음과 같았다:\n(ⅰ) Notion을 활용하여 10년간의 감각 경험을 카드로 제작한다.\n(ⅱ) 2025년의 시점에서 코멘트를 덧붙인다. 과거에 작성되거나 창작된 결과물은 다시 경험되며, 새로운 감각으로 발생한다.⁵⁾\n(ⅲ) 제작된 카드는 워크숍 일주일 전 멤버들에게 공유되며, 각자 각각의 카드에 자유롭게 주석을 단다.\n(ⅳ) 4월 27일, 모여서 백감사전을 공유한다. 어디로 흘러가는지 본다.",
+      side: [
+        "⁴⁾ 난항(難航) 콜렉티브. 좀처럼 순항하지 않는 모임.",
+        "⁵⁾ 여기서 '새로운 감각으로 발생한다'는 말은 수사가 아니다. 2017년에 기록된 카드를 2025년에 다시 읽는 행위는 회고가 아니라 반복이며, 들뢰즈적 의미에서 차이를 생산하는 반복이다. 이 사전의 독자는 결국 이 사전의 편찬자가 되고, 편찬자는 다시 독자가 된다. 이 순환에는 출구가 없으며, 아마도 출구가 필요하지도 않다."
+      ]
+    },
+    {
+      note: "이 사전이 유용하다면, 그것은 독자가 이 사전 없이도 자신이 감각하고 있음을 지각할 수 있게 되었을 때일 것이다. 좋은 사전이 으레 그렇듯, 이 사전의 최종 목적은 자기 자신을 불필요하게 만드는 데 있다.",
+      side: null
+    }
+  ];
+
   return (
-    <div id="note-section" className="relative z-10 w-full min-h-[100dvh] bg-[var(--color-foreground)] text-[var(--color-background)] px-6 sm:px-12 pt-16 pb-16 sm:pt-8 sm:pb-8 flex flex-col justify-center items-center">
-      <div className="w-full flex justify-between tracking-widest text-[10px] sm:text-xs uppercase mb-8 sm:mb-12">
-        <span>Chapter 1</span>
-        <span>Sencyclopedia Note</span>
+    <div id="note-section" className="relative z-10 w-full flex flex-col">
+      {/* Existing Note Section Content */}
+      <div className="w-full min-h-[100dvh] bg-[var(--color-foreground)] text-[var(--color-background)] px-6 sm:px-12 pt-16 pb-16 sm:pt-8 sm:pb-8 flex flex-col justify-center items-center">
+        <div className="w-full flex justify-between tracking-widest text-[10px] sm:text-xs uppercase mb-8 sm:mb-12">
+          <span>Chapter 1</span>
+          <span>Sencyclopedia Note</span>
+        </div>
+
+        <div className="w-full flex flex-col gap-24 sm:gap-6">
+          <div className="flex flex-col gap-4 w-full">
+            <h2 className="text-[7vw] sm:text-[5vw] leading-[1.15] font-serif tracking-tight break-keep text-left" style={{ wordBreak: 'keep-all' }}>
+              “그러니까 그녀는 — 그녀의 깊은 생각 속으로 내려가려고 하지 않는다면 어떤 사람인지 분류할 수 없는데, 그녀가 너무도 재미없는 사람이어서 누구도 그런 생각은 하지 않는다 — 그러니까 묵묵히 모험을 겪었던 한 여인이었다. 이상하게도 영적인 모험을 살고 있었던 것이다.”
+            </h2>
+            <div className="flex flex-col w-full">
+              <div className="flex justify-start sm:justify-end pt-2 sm:pt-4 w-full">
+                <span className="text-[12px] sm:text-[12px] tracking-[0.1em] font-light">
+                  ‘먼 바다로 떠난 이야기’ 중, &lt;세상의 발견&gt;, 클라리시 리스펙토르
+                </span>
+              </div>
+              <div className="flex justify-center w-full mt-20 sm:mt-28">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/miro.png" alt="Illustration" className="w-[120px] sm:w-[150px] object-contain opacity-85 mix-blend-multiply mx-auto" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 text-[14px] text-center items-center leading-6 mt-8">
+            <p>
+              나는 언제나 투명하게 들여다보이고 싶은<sup className="text-[10px] ml-0.5">1)</sup> 동시에 그것을 두려워했다.
+            </p>
+            <p>
+              살아온 길, 사유해 온 방식, 소박하고 작지만 한 개인을 만들어 온 여정을 공유하는 것은 무의미할 수도 있겠다.<br />
+              하지만 어쩌면 삶의 순간들을 축복하는 작은 계기가 될 수도 있지 않을까.<br />
+              나는 늘 작은 기대에 많은 것을 걸고, 이번에도 마찬가지다.
+            </p>
+            <p>
+              모두의 묵묵한 모험이 계속 되길 바라며.
+            </p>
+            <div className="flex flex-col gap-1 mt-8">
+              <span>2025. 04. 20.</span>
+              <span>서희</span>
+            </div>
+            <div className="text-[12px] w-full mt-8">
+              <p>
+                ¹⁾ 김복희, 『희망은 사랑을 한다』 시인의 말 "나는 아주 투명하게 들여다보이고 싶다." 꽤 오래 나의 SNS 프로필 소개글이었다.
+              </p>
+            </div>
+            <div className="w-full h-[15vh]"></div>
+          </div>
+        </div>
       </div>
 
-      <div className="w-full flex flex-col gap-24 sm:gap-6">
+      {/* New Editorial Note Section (White Background + Sidenotes Layout) */}
+      <div id="editorial-note" className="w-full bg-[#FFFFFF] text-[#4e0000] px-6 sm:px-12 py-8 sm:py-12 flex flex-col items-center">
+        <div className="max-w-[1100px] w-full flex flex-col">
+          <h3 className="text-[14px] tracking-[0.4em] font-serif uppercase mb-24 text-center lg:text-left">
+            일러두기
+          </h3>
 
-        {/* 인용구 영역 (화면을 가득 채우는 거대 서체) */}
-        <div className="flex flex-col gap-4 w-full">
-          <h2 className="text-[7vw] sm:text-[5vw] leading-[1.15] font-serif tracking-tight break-keep text-left" style={{ wordBreak: 'keep-all' }}>
-            “그러니까 그녀는 — 그녀의 깊은 생각 속으로 내려가려고 하지 않는다면 어떤 사람인지 분류할 수 없는데, 그녀가 너무도 재미없는 사람이어서 누구도 그런 생각은 하지 않는다 — 그러니까 묵묵히 모험을 겪었던 한 여인이었다. 이상하게도 영적인 모험을 살고 있었던 것이다.”
-          </h2>
-          <div className="flex flex-col w-full">
-            <div className="flex justify-start sm:justify-end pt-2 sm:pt-4 w-full">
-              <span className="text-[12px] sm:text-[12px] tracking-[0.1em] font-light">
-                ‘먼 바다로 떠난 이야기’ 중, &lt;세상의 발견&gt;, 클라리시 리스펙토르
-              </span>
-            </div>
-            {/* 인용구 하단 공간 및 miro 일러스트 가운데 정렬 */}
-            <div className="flex justify-center w-full mt-20 sm:mt-28">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/miro.png" alt="Illustration" className="w-[120px] sm:w-[150px] object-contain opacity-85 mix-blend-multiply mx-auto" />
-            </div>
+          <div className="flex flex-col gap-16 sm:gap-20">
+            {items.map((item, index) => (
+              <div key={index} className="grid grid-cols-1 lg:grid-cols-[60px_1fr_300px] gap-6 lg:gap-12 relative items-start">
+                {/* 1. 로마자 */}
+                <span className="text-xl sm:text-2xl font-serif tracking-tighter text-left lg:text-right leading-[1.2] pt-0.5">
+                  {romanNumbers[index]}
+                </span>
+
+                {/* 2. 본문 */}
+                <div className="flex flex-col">
+                  <div className="text-[13px] sm:text-[14.5px] leading-[1.8] sm:leading-[1.95] font-serif text-justify break-keep whitespace-pre-wrap">
+                    {item.note}
+                  </div>
+                  {/* 모바일에서의 주석 배치 (LG 미만) */}
+                  {item.side && (
+                    <div className="mt-6 flex flex-col gap-3 lg:hidden p-4 bg-[#4e0000]/[0.03] border-l border-[#4e0000]/20">
+                      {Array.isArray(item.side) ? (
+                        item.side.map((s, i) => (
+                          <p key={i} className="text-[11px] sm:text-[12px] leading-[1.7] font-serif text-justify opacity-80">
+                            {s}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-[11px] sm:text-[12px] leading-[1.7] font-serif text-justify opacity-80">
+                          {item.side}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. 데스크탑에서의 행간 주석 (LG 이상) */}
+                <div className="hidden lg:flex flex-col gap-4 sticky top-32">
+                  {item.side && (
+                    <div className="flex flex-col gap-4 pl-8 border-l border-[#4e0000]/10">
+                      {Array.isArray(item.side) ? (
+                        item.side.map((s, i) => (
+                          <p key={i} className="text-[11.5px] leading-[1.7] font-serif text-justify opacity-80 tracking-tight">
+                            {s}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-[11.5px] leading-[1.7] font-serif text-justify opacity-80 tracking-tight">
+                          {item.side}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
+          <div className="w-full h-[15vh]"></div>
         </div>
-
-        {/* 본문 편지 영역 */}
-        <div className="flex-1 text-[14px] text-center items-center leading-6 mt-8">
-          <p>
-            나는 언제나 투명하게 들여다보이고 싶은(1) 동시에 그것을 두려워했다.
-          </p>
-          <p>
-            살아온 길, 사유해 온 방식, 소박하고 작지만 한 개인을 만들어 온 여정을 공유하는 것은            무의미할 수도 있겠다.<br />
-            하지만 어쩌면 삶의 순간들을 축복하는 작은 계기가 될 수도 있지 않을까.<br />
-            나는 늘 작은 기대에 많은 것을 걸고, 이번에도 마찬가지다.
-          </p>
-          <p>
-             <div className="flex flex-col gap-1 mt-8"></div>
-            모두의 묵묵한 모험이 계속 되길 바라며.
-          </p>
-          <div className="flex flex-col gap-1 mt-8">
-            <span>2025. 04. 20.</span>
-            <span>서희</span>
-          </div>
-          <div className="text-[12px] w-full mt-8">
-            <p>
-              (1) 김복희, 『희망은 사랑을 한다』 시인의 말 "나는 아주 투명하게 들여다보이고 싶다." 꽤 오래 나의 SNS 프로필 소개글이었다.
-            </p>
-          </div>
-          <div className="w-full h-[20vh]"></div>
-        </div>
-
       </div>
     </div>
   );
 }
+
 
 const NoteView = () => {
   return (
@@ -1063,7 +1161,7 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
   const handleRowClick = (card: CardItem) => {
     const id = (card.detail?.cardId || "").trim();
     if (!id) return;
-    
+
     setExpandedCardIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -1128,7 +1226,7 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
           {/* Table Body - 스크롤 앵커링 오작동 방지를 위해 강력한 차단 적용 */}
           <div className="flex flex-col w-full" style={{ overflowAnchor: 'none', WebkitOverflowScrolling: 'touch' }}>
             {cardsData.map((card, i) => (
-              <IndexRow 
+              <IndexRow
                 key={card.detail?.cardId || i}
                 card={card}
                 isExpanded={expandedCardIds.has((card.detail?.cardId || "").trim())}
@@ -1158,11 +1256,11 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
 // ============================================
 // IndexView 개별 행 컴포넌트 (환경별 최적화)
 // ============================================
-const IndexRow = ({ 
+const IndexRow = ({
   card, isExpanded, onRowClick, onHover
-}: { 
-  card: CardItem; 
-  isExpanded: boolean; 
+}: {
+  card: CardItem;
+  isExpanded: boolean;
   onRowClick: (card: CardItem) => void;
   onHover: (card: CardItem | null) => void;
 }) => {
