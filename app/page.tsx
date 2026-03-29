@@ -831,7 +831,7 @@ function NoteSection() {
               </span>
             </div>
             {/* 인용구 하단 공간 및 miro 일러스트 가운데 정렬 */}
-            <div className="flex justify-center w-full mt-16 sm:mt-24">
+            <div className="flex justify-center w-full mt-20 sm:mt-28">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/miro.png" alt="Illustration" className="w-[120px] sm:w-[150px] object-contain opacity-85 mix-blend-multiply mx-auto" />
             </div>
@@ -839,24 +839,24 @@ function NoteSection() {
         </div>
 
         {/* 본문 편지 영역 */}
-        <div className="flex-1 text-center items-center leading-8">
+        <div className="flex-1 text-[14px] text-center items-center leading-6 mt-8">
           <p>
             나는 언제나 투명하게 들여다보이고 싶은(1) 동시에 그것을 두려워했다.
           </p>
           <p>
-            살아온 길, 사유해 온 방식, 소박하고 작지만 한 개인을 만들어 온 여정을 공유하는 것은 <br />
-            무의미할 수도 있겠다.<br />
+            살아온 길, 사유해 온 방식, 소박하고 작지만 한 개인을 만들어 온 여정을 공유하는 것은            무의미할 수도 있겠다.<br />
             하지만 어쩌면 삶의 순간들을 축복하는 작은 계기가 될 수도 있지 않을까.<br />
             나는 늘 작은 기대에 많은 것을 걸고, 이번에도 마찬가지다.
           </p>
           <p>
+             <div className="flex flex-col gap-1 mt-8"></div>
             모두의 묵묵한 모험이 계속 되길 바라며.
           </p>
-          <div className="flex flex-col gap-1 mt-4">
+          <div className="flex flex-col gap-1 mt-8">
             <span>2025. 04. 20.</span>
             <span>서희</span>
           </div>
-          <div className="w-full mt-4">
+          <div className="text-[12px] w-full mt-8">
             <p>
               (1) 김복희, 『희망은 사랑을 한다』 시인의 말 "나는 아주 투명하게 들여다보이고 싶다." 꽤 오래 나의 SNS 프로필 소개글이었다.
             </p>
