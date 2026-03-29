@@ -365,6 +365,13 @@ const ListCard = ({
           marginTop: "-122px",
         }}
       >
+        {/* card ID — 이미지 상단 바깥, 배경 없이 */}
+        <div className="pb-2 pointer-events-none">
+          <span className="text-[9px] tracking-[0.18em] font-mono text-[#1a1a1a] uppercase leading-tight opacity-70">
+            {card.detail?.cardId}
+          </span>
+        </div>
+
         <div
           className="list-card-visual overflow-hidden shadow-[0_12px_36px_-9px_rgba(0,0,0,0.25)] bg-[#fdfdfc] flex flex-col will-change-transform pointer-events-none relative"
           style={{ width: "245px" }}
@@ -378,12 +385,8 @@ const ListCard = ({
                 className="w-full h-auto select-none block"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent mix-blend-overlay pointer-events-none" />
-              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 text-[9px] tracking-widest font-mono text-[#1a1a1a] border border-black/5 shadow-sm">
-                {card.detail?.cardId}
-              </div>
             </>
           ) : card.type === "image" ? (
-            // 이미지 로딩 중 플레이스홀더
             <div className="w-full aspect-square bg-[#f0ede4] flex items-center justify-center">
               <span className="text-[9px] font-mono text-[#1a1a1a]/30 tracking-widest">{card.detail?.cardId}</span>
             </div>
