@@ -8,6 +8,13 @@
 }
 
 @font-face {
+  font-family: 'Playfair Display SC Bold';
+  src: url('/Playfair_Display_SC,Tangerine/Playfair_Display_SC/PlayfairDisplaySC-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
   font-family: 'Hahmlet Local';
   src: url('/Hahmlet/static/Hahmlet-ExtraLight.ttf') format('truetype');
   font-weight: 200;

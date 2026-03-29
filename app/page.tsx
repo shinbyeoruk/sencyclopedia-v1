@@ -654,6 +654,12 @@ const NoteView = () => {
 // ============================================
 const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
   const [hoveredCard, setHoveredCard] = useState<CardItem | null>(null);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+
+  const handleRowClick = (card: CardItem) => {
+    const id = card.detail?.cardId || null;
+    setExpandedCardId(prev => (prev === id ? null : id));
+  };
 
   return (
     <motion.div 
@@ -703,37 +709,90 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
 
           {/* Table Body */}
           <div className="flex flex-col">
-            {cardsData.map((card, i) => (
-              <div 
-                key={card.detail?.cardId || i}
-                onMouseEnter={() => setHoveredCard(card)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className="flex border-b border-[var(--color-foreground)]/40 hover:bg-[var(--color-foreground)]/10 transition-colors cursor-pointer group font-mono text-[11px] sm:text-xs md:text-sm"
-              >
-                <div className="w-10 sm:w-16 flex-shrink-0 border-r border-[var(--color-foreground)]/40 flex items-center justify-center py-3 sm:py-4">
-                  {card.type === 'image' ? '■' : '○'}
-                </div>
-                <div className="flex-1 border-r border-[var(--color-foreground)]/40 flex px-3 sm:px-4 items-center py-3 sm:py-4 font-serif tracking-tight uppercase break-keep text-[#eaddbc]">
-                  {card.detail?.name}
-                </div>
-                <div className="w-24 sm:w-32 md:w-48 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden sm:flex py-3 sm:py-4 uppercase opacity-80">
-                  {card.detail?.layer}
-                </div>
-                <div className="w-20 sm:w-28 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden md:flex py-3 sm:py-4 uppercase opacity-80">
-                  {card.detail?.type}
-                </div>
-                <div className="w-16 sm:w-24 px-3 sm:px-4 items-center flex py-3 sm:py-4 uppercase opacity-80 relative">
-                  {card.detail?.year}
-                  <span className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                </div>
-              </div>
-            ))}
+            {cardsData.map((card, i) => {
+              const cardId = card.detail?.cardId || String(i);
+              const isExpanded = expandedCardId === cardId;
+
+              return (
+                <React.Fragment key={cardId}>
+                  {/* 행 */}
+                  <div
+                    onMouseEnter={() => setHoveredCard(card)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    onClick={() => handleRowClick(card)}
+                    className={`flex border-b border-[var(--color-foreground)]/40 transition-colors cursor-pointer group font-mono text-[11px] sm:text-xs md:text-sm ${isExpanded ? 'bg-[var(--color-foreground)]/15' : 'hover:bg-[var(--color-foreground)]/10'}`}
+                  >
+                    <div className="w-10 sm:w-16 flex-shrink-0 border-r border-[var(--color-foreground)]/40 flex items-center justify-center py-3 sm:py-4">
+                      {card.type === 'image' ? '■' : '○'}
+                    </div>
+                    <div className="flex-1 border-r border-[var(--color-foreground)]/40 flex px-3 sm:px-4 items-center py-3 sm:py-4 font-serif tracking-tight uppercase break-keep text-[#eaddbc]">
+                      {card.detail?.name}
+                    </div>
+                    <div className="w-24 sm:w-32 md:w-48 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden sm:flex py-3 sm:py-4 uppercase opacity-80">
+                      {card.detail?.layer}
+                    </div>
+                    <div className="w-20 sm:w-28 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden md:flex py-3 sm:py-4 uppercase opacity-80">
+                      {card.detail?.type}
+                    </div>
+                    <div className="w-16 sm:w-24 px-3 sm:px-4 items-center flex py-3 sm:py-4 uppercase opacity-80 relative">
+                      {card.detail?.year}
+                      {/* 모바일: 열림/닫힘 인디케이터 / 데스크톱: 화살표 */}
+                      <span className="absolute right-3 transition-all duration-300 lg:hidden opacity-60 text-[10px]">
+                        {isExpanded ? '▲' : '▼'}
+                      </span>
+                      <span className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:block">→</span>
+                    </div>
+                  </div>
+
+                  {/* 모바일 전용 아코디언 — lg 이상에서는 숨김 */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        key={`accordion-${cardId}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                        className="overflow-hidden lg:hidden border-b border-[var(--color-foreground)]/40 bg-[var(--color-foreground)]/8"
+                      >
+                        <div className="px-4 py-5 flex flex-col gap-3">
+                          {/* 제목 + ID */}
+                          <div className="pb-3 border-b border-[var(--color-foreground)]/20">
+                            <h3 className="text-base font-serif tracking-tight leading-[1.2] uppercase break-keep mb-1.5 text-[var(--color-foreground)]">
+                              {card.detail?.name}
+                            </h3>
+                            <span className="text-[9px] opacity-50 font-mono tracking-widest uppercase">
+                              ID: {card.detail?.cardId}
+                            </span>
+                          </div>
+                          {/* 메타 정보 */}
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] opacity-60 uppercase tracking-widest">
+                            {card.detail?.year && <span>{card.detail.year}</span>}
+                            {card.detail?.layer && <span>· {card.detail.layer}</span>}
+                            {card.detail?.type && <span>· {card.detail.type}</span>}
+                          </div>
+                          {/* 2025 코멘트 */}
+                          <div>
+                            <span className="block text-[9px] uppercase tracking-widest font-mono opacity-40 mb-2">
+                              2025 Retrospect
+                            </span>
+                            <p className="text-[13px] leading-[1.85] break-keep whitespace-pre-wrap font-serif text-[var(--color-foreground)] opacity-90">
+                              {card.detail?.comment || "No comment provided for this entry."}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              );
+            })}
           </div>
           <div className="h-12 bg-transparent border-b border-[var(--color-foreground)]/40 border-dashed opacity-50"></div>
         </div>
 
-        {/* Right Preview Section */}
-        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-32 max-h-[80vh] p-6 sm:p-8 xl:p-12 overflow-y-auto custom-scrollbar">
+        {/* Right Preview Section — 데스크톱 전용 */}
+        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-32 max-h-[80vh] p-6 sm:p-8 xl:p-12 overflow-y-auto custom-scrollbar hidden lg:block">
           {hoveredCard ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
@@ -783,7 +842,10 @@ export default function Home() {
           className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => setViewMode("landing")}
         >
-          <h2 className={`text-lg sm:text-xl tracking-[0.2em] uppercase select-none ${viewMode === 'index' ? 'text-[#f7f4e9]' : 'text-[#4A151C]'}`}>
+          <h2
+            className={`text-lg sm:text-xl tracking-[0.2em] uppercase select-none ${viewMode === 'index' ? 'text-[#f7f4e9]' : 'text-[#4A151C]'}`}
+            style={{ fontFamily: "'Playfair Display SC Bold', serif" }}
+          >
             SENCYCLOPEDIA
           </h2>
         </div>
