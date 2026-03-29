@@ -163,18 +163,21 @@ const generateCards = () => {
   return sencyDb.map((row: any) => {
     // BOM 처리를 위해 키 순회 등 방어적 접근
     const nameKey = Object.keys(row).find(k => k.includes('이름')) || '이름';
+    // 모든 키값과 밸류에 대한 정규화 (BOM 및 공백 제거)
+    const normalize = (val: any) => typeof val === 'string' ? val.trim() : val;
+    
     const detail: DetailData = {
-      name: row[nameKey] || "",
-      comment: row['2025 코멘트'] || "",
-      intensity: row['강도'] || "",
-      number: row['번호'] || "",
-      date: row['생성일'] || "",
-      year: row['연도'] || "",
-      location: row['장소'] || "",
-      layer: row['층위'] || "",
-      cardId: row['카드 ID'] || "",
-      tags: row['태그'] || "",
-      type: row['형식'] || "",
+      name: normalize(row[nameKey] || ""),
+      comment: normalize(row['2025 코멘트'] || ""),
+      intensity: normalize(row['강도'] || ""),
+      number: normalize(row['번호'] || ""),
+      date: normalize(row['생성일'] || ""),
+      year: normalize(row['연도'] || ""),
+      location: normalize(row['장소'] || ""),
+      layer: normalize(row['층위'] || ""),
+      cardId: normalize(row['카드 ID'] || ""),
+      tags: normalize(row['태그'] || ""),
+      type: normalize(row['형식'] || ""),
     };
 
     const type = row['형식'];
@@ -445,7 +448,8 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
       }
     };
 
-    window.scrollTo({ top: midPoint, behavior: "instant" });
+    // window.scrollTo 제거 (자동 스크롤 모션 삭제)
+    // window.scrollTo({ top: midPoint, behavior: "instant" });
     setScrollY(midPoint);
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -753,7 +757,7 @@ const MoodboardView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCa
 
   useEffect(() => {
     setIsMounted(true);
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" });
+    // window.scrollTo 제거 (자동 스크롤 모션 삭제)
   }, []);
 
   if (!isMounted) return null;
@@ -1053,11 +1057,23 @@ const NoteView = () => {
 // ============================================
 const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
   const [hoveredCard, setHoveredCard] = useState<CardItem | null>(null);
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [heldCard, setHeldCard] = useState<CardItem | null>(null);
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
 
   const handleRowClick = (card: CardItem) => {
-    const id = card.detail?.cardId || null;
-    setExpandedCardId(prev => (prev === id ? null : id));
+    const id = (card.detail?.cardId || "").trim();
+    if (!id) return;
+    
+    setExpandedCardIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+    setHeldCard(card);
   };
 
   return (
@@ -1065,18 +1081,20 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full min-h-[100dvh] pt-32 pb-24 px-4 sm:px-8 flex flex-col bg-[var(--color-background)] text-[var(--color-foreground)]"
+      className="w-full min-h-[100dvh] pt-32 pb-12 px-4 sm:px-8 flex flex-col bg-[var(--color-background)] text-[var(--color-foreground)]"
     >
-      <div className="flex flex-col mb-12 border-b border-[var(--color-foreground)]/40 pb-6 max-w-[1600px] w-full mx-auto">
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-sans tracking-widest uppercase mb-4 text-[var(--color-foreground)]">
-          SENCYCLOPEDIA <span className="opacity-40">INDEX</span>
+      {/* 1. 타이틀 섹션 — 스크롤 시 먼저 밀려 올라감 */}
+      <div className="flex flex-col mb-[18px] max-w-[1600px] w-full mx-auto px-4 sm:px-0">
+        <h1 className="text-5xl sm:text-7xl md:text-8xl font-sans tracking-widest uppercase mb-6 text-[var(--color-foreground)] leading-tight">
+          SENCYCLOPEDIA <br className="sm:hidden" />
+          <span className="opacity-40">INDEX</span>
         </h1>
-        <div className="flex justify-between items-end mt-4">
-          <p className="text-[10px] sm:text-xs tracking-widest uppercase font-mono leading-relaxed opacity-70">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-[var(--color-foreground)]/40 pb-10">
+          <p className="text-[10px] sm:text-xs tracking-widest uppercase font-mono leading-relaxed opacity-70 max-w-xl">
             └ WORK INDEX <br />
             * a curated collection of sensory data → including images, text, ideas, and memories *
           </p>
-          <div className="text-[9px] sm:text-[10px] tracking-widest text-right font-mono opacity-60">
+          <div className="text-[9px] sm:text-[10px] tracking-widest text-left sm:text-right font-mono opacity-60">
             ┌ LEGEND<br />
             ■ IMG / MIX<br />
             ○ TXT
@@ -1084,7 +1102,8 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row flex-1 border border-[var(--color-foreground)]/40 relative max-w-[1600px] w-full mx-auto">
+      {/* 2. 리스트 및 프리뷰 섹션 — 분리된 영역 */}
+      <div className="flex flex-col lg:flex-row flex-1 border border-[var(--color-foreground)]/40 relative max-w-[1600px] w-full mx-auto mt-0 bg-[var(--color-background)]">
         {/* Left Table Section */}
         <div className="flex-1 lg:border-r border-[var(--color-foreground)]/40 flex flex-col">
           {/* Table Header */}
@@ -1106,69 +1125,85 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
             </div>
           </div>
 
-          {/* Table Body */}
-          <div className="flex flex-col">
-            {cardsData.map((card, i) => {
-              const cardId = card.detail?.cardId || String(i);
-              const isExpanded = expandedCardId === cardId;
-
-              return (
-                <React.Fragment key={cardId}>
-                  {/* 행 */}
-                  <div
-                    onMouseEnter={() => setHoveredCard(card)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    onClick={() => handleRowClick(card)}
-                    className={`flex border-b border-[var(--color-foreground)]/40 transition-colors cursor-pointer group font-mono text-[11px] sm:text-xs md:text-sm ${isExpanded ? 'bg-[var(--color-foreground)]/15' : 'hover:bg-[var(--color-foreground)]/10'}`}
-                  >
-                    <div className="w-10 sm:w-16 flex-shrink-0 border-r border-[var(--color-foreground)]/40 flex items-center justify-center py-3 sm:py-4">
-                      {card.type === 'image' ? '■' : '○'}
-                    </div>
-                    <div className="flex-1 border-r border-[var(--color-foreground)]/40 flex px-3 sm:px-4 items-center py-3 sm:py-4 font-serif tracking-tight uppercase break-keep text-[#eaddbc]">
-                      {card.detail?.name}
-                    </div>
-                    <div className="w-24 sm:w-32 md:w-48 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden sm:flex py-3 sm:py-4 uppercase opacity-80">
-                      {card.detail?.layer}
-                    </div>
-                    <div className="w-20 sm:w-28 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden md:flex py-3 sm:py-4 uppercase opacity-80">
-                      {card.detail?.type}
-                    </div>
-                    <div className="w-16 sm:w-24 px-3 sm:px-4 items-center flex py-3 sm:py-4 uppercase opacity-80 relative">
-                      {card.detail?.year}
-                      {/* 모바일: 열림/닫힘 인디케이터 / 데스크톱: 화살표 */}
-                      <span className="absolute right-3 transition-all duration-300 lg:hidden opacity-60 text-[10px]">
-                        {isExpanded ? '▲' : '▼'}
-                      </span>
-                      <span className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:block">→</span>
-                    </div>
-                  </div>
-
-                  {/* 모바일 전용 아코디언 — lg 이상에서는 숨김 */}
-                  <AnimatePresence initial={false}>
-                    {isExpanded && (
-                      <MobileAccordion card={card} cardId={cardId} />
-                    )}
-                  </AnimatePresence>
-                </React.Fragment>
-              );
-            })}
+          {/* Table Body - 스크롤 앵커링 오작동 방지를 위해 강력한 차단 적용 */}
+          <div className="flex flex-col w-full" style={{ overflowAnchor: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {cardsData.map((card, i) => (
+              <IndexRow 
+                key={card.detail?.cardId || i}
+                card={card}
+                isExpanded={expandedCardIds.has((card.detail?.cardId || "").trim())}
+                onRowClick={handleRowClick}
+                onHover={setHoveredCard}
+              />
+            ))}
           </div>
-          <div className="h-12 bg-transparent border-b border-[var(--color-foreground)]/40 border-dashed opacity-50"></div>
         </div>
 
-        {/* Right Preview Section — 데스크톱 전용 */}
-        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-32 max-h-[80vh] overflow-y-auto custom-scrollbar hidden lg:block">
-          {hoveredCard ? (
-            <IndexPreviewPanel card={hoveredCard} />
+        {/* Right Preview Section — 데스크톱 전용 (상단 고정 sticky) */}
+        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-10 max-h-[90vh] overflow-y-auto custom-scrollbar hidden lg:block border-l lg:border-l border-[var(--color-foreground)]/40 bg-[var(--color-background)]">
+          {(hoveredCard || heldCard) ? (
+            <IndexPreviewPanel card={hoveredCard || (heldCard as CardItem)} />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-12 opacity-20">
               <span className="text-lg xl:text-xl tracking-widest mb-4 font-mono">PREVIEW</span>
-              <span className="text-[10px] font-mono uppercase tracking-widest">Hover over an item</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest">Hover or click an item</span>
             </div>
           )}
         </div>
       </div>
     </motion.div>
+  );
+};
+
+// ============================================
+// IndexView 개별 행 컴포넌트 (환경별 최적화)
+// ============================================
+const IndexRow = ({ 
+  card, isExpanded, onRowClick, onHover
+}: { 
+  card: CardItem; 
+  isExpanded: boolean; 
+  onRowClick: (card: CardItem) => void;
+  onHover: (card: CardItem | null) => void;
+}) => {
+  const cardId = card.detail?.cardId || "";
+
+  return (
+    <div className="relative border-b border-[var(--color-foreground)]/40 w-full">
+      {/* 제목행 (Row) */}
+      <div
+        onMouseEnter={() => onHover(card)}
+        onMouseLeave={() => onHover(null)}
+        onClick={() => onRowClick(card)}
+        className={`flex w-full transition-colors cursor-pointer group font-mono text-[11px] sm:text-xs md:text-sm
+          ${isExpanded ? 'bg-[var(--color-foreground)]/20' : 'hover:bg-[var(--color-foreground)]/10'}`}
+      >
+        <div className="w-10 sm:w-16 flex-shrink-0 border-r border-[var(--color-foreground)]/40 flex items-center justify-center py-3 sm:py-4">
+          {card.type === 'image' ? '■' : '○'}
+        </div>
+        <div className="flex-1 border-r border-[var(--color-foreground)]/40 flex px-3 sm:px-4 items-center py-3 sm:py-4 font-serif tracking-tight uppercase break-keep text-[#eaddbc]">
+          {card.detail?.name}
+        </div>
+        <div className="w-24 sm:w-32 md:w-48 border-r border-[var(--color-foreground)]/40 px-3 sm:px-4 items-center hidden sm:flex py-3 sm:py-4 uppercase opacity-80">
+          {card.detail?.layer}
+        </div>
+        <div className="w-16 sm:w-24 px-3 sm:px-4 items-center flex py-3 sm:py-4 uppercase opacity-80 relative">
+          {card.detail?.year}
+          <span className="absolute right-3 transition-transform duration-300 opacity-60 text-[10px]" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }}>
+            ▼
+          </span>
+        </div>
+      </div>
+
+      {/* 모바일 전용 아코디언 — lg 이상(데스크톱)에서는 숨김 */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <div className="w-full bg-[var(--color-foreground)]/5 overflow-hidden lg:hidden">
+            <MobileAccordion card={card} cardId={cardId} />
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -1232,10 +1267,10 @@ const MobileAccordion = ({ card, cardId }: { card: CardItem; cardId: string }) =
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-      className="overflow-hidden lg:hidden border-b border-[var(--color-foreground)]/40"
-      style={{ backgroundColor: "rgba(234, 221, 188, 0.08)" }}
+      className="overflow-visible border-b border-[var(--color-foreground)]/40"
+      style={{ backgroundColor: "rgba(234, 221, 188, 0.05)" }}
     >
-      <div className="px-4 py-5 flex flex-col gap-4">
+      <div className="px-4 pt-4 pb-12 flex flex-col gap-6">
         {/* 제목 + ID */}
         <div className="pb-3 border-b border-[var(--color-foreground)]/20">
           <h3 className="text-base font-serif tracking-tight leading-[1.2] uppercase break-keep mb-1.5 text-[var(--color-foreground)]">
