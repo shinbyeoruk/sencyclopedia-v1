@@ -52,21 +52,23 @@ const ColorBlockCard = ({
   onCardClick: (v: CardItem) => void,
   height: string
 }) => {
+  const { images } = useCardImages(card.detail?.cardId);
+  const thumbnailSrc = images[0]; // cardId-1 이미지
+
   const [avgColor, setAvgColor] = useState<string>("#fdfdfc");
-  const [isColorLoaded, setIsColorLoaded] = useState(false);
   
   const cardRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ x: 0, y: 0, w: 0, h: 0 });
 
+  // thumbnailSrc가 확정되면 평균 컬러 추출
   useEffect(() => {
-    if (card.type !== "image" || !card.src) {
+    if (!thumbnailSrc) {
       setAvgColor("#fdfdfc");
-      setIsColorLoaded(true);
       return;
     }
     const img = new window.Image();
     img.crossOrigin = "Anonymous";
-    img.src = card.src;
+    img.src = thumbnailSrc;
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 1;
@@ -77,10 +79,8 @@ const ColorBlockCard = ({
         const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
         setAvgColor(`rgb(${r}, ${g}, ${b})`);
       }
-      setIsColorLoaded(true);
     };
-    img.onerror = () => setIsColorLoaded(true);
-  }, [card]);
+  }, [thumbnailSrc]);
 
   // 그리드 내 자신의 '문서 전체 기준의 절대 좌표'를 파악합니다.
   useEffect(() => {
@@ -98,7 +98,6 @@ const ColorBlockCard = ({
     
     updateBox();
     
-    // 레이아웃이 변할때(브라우저 크기 조절 등) 정확하게 좌표를 다시 잡기 위한 옵저버
     const observer = new ResizeObserver(updateBox);
     if (cardRef.current) {
       observer.observe(cardRef.current);
@@ -113,13 +112,10 @@ const ColorBlockCard = ({
 
   // Framer Motion을 활용한 마우스 근접도(Proximity) 계산 퍼포먼스 최적화
   const opacity = useTransform([mouseX, mouseY], ([x, y]: number[]) => {
-    if (box.w === 0) return 0; // 아직 렌더링 측정이 안됨
-    
+    if (box.w === 0) return 0;
     const dx = Math.max(box.x - x, 0, x - (box.x + box.w));
     const dy = Math.max(box.y - y, 0, y - (box.y + box.h));
     const distFromEdge = Math.hypot(dx, dy);
-
-    // 박스 내부(거리=0)이거나 박스 모서리 가까이 접근 시 이미지 노출
     return distFromEdge <= 120 ? 1 : 0;
   });
 
@@ -132,17 +128,20 @@ const ColorBlockCard = ({
       className="relative w-full cursor-pointer overflow-hidden hover:shadow-2xl transition-shadow"
       style={{
         height,
-        backgroundColor: avgColor, // 추출된 평균 컬러 스크린
+        backgroundColor: avgColor,
       }}
     >
       <motion.div 
         className="w-full h-full relative"
-        style={{ opacity }} // 모션 밸류를 이미지 투명도에 다이렉트로 바인딩
+        style={{ opacity }}
         transition={{ duration: 0.3 }}
       >
-        {card.type === "image" ? (
+        {card.type === "image" && thumbnailSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={card.src} alt="Moodboard Art" className="w-full h-full object-cover select-none pointer-events-none" />
+          <img src={thumbnailSrc} alt="Moodboard Art" className="w-full h-full object-cover select-none pointer-events-none" />
+        ) : card.type === "image" ? (
+          // 이미지 없는 image 타입 (TXT 카드 등) — 빈 블록
+          <div className="w-full h-full bg-[#f0ede4]" />
         ) : (
           <div className="w-full h-full p-4 flex items-center justify-center bg-[#fdfdfc] border border-[--color-background]/10">
             <p className="text-[--color-background] font-serif text-[10px] md:text-sm leading-relaxed text-justify break-keep pointer-events-none select-none">
