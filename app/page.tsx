@@ -6,6 +6,21 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useScroll, useMo
 import DetailModal, { DetailData } from "@/components/DetailModal";
 import sencyDb from "../public/sency_db.json";
 
+// ============================================
+// useCardImages: card ID → 이미지 경로 배열
+// ============================================
+function useCardImages(cardId: string | undefined) {
+  const [images, setImages] = useState<string[]>([]);
+  useEffect(() => {
+    if (!cardId) { setImages([]); return; }
+    fetch(`/api/images/${encodeURIComponent(cardId)}`)
+      .then((r) => r.json())
+      .then((d) => setImages(d.images ?? []))
+      .catch(() => setImages([]));
+  }, [cardId]);
+  return { images };
+}
+
 export type CardItem = {
   type: string;
   src?: string;
@@ -161,15 +176,14 @@ const generateCards = () => {
 
     const type = row['형식'];
     const textStr = row[nameKey] || "";
+    const cardId = detail.cardId;
 
+    // 썸네일: /images/{cardId}-1.jpeg 또는 .png (IMG/MIX/TXT 공통 — 이미지가 있으면 표시)
+    // 런타임에 확장자를 모르므로 API 없이 src를 null로 두고 ListCard에서 useCardImages로 처리
     if (type === 'IMG' || type === 'MIX') {
-      const defaultImages = ["/sample.png", "/analog_art_1.png", "/analog_art_2.png"];
-      const hashData = [...textStr].reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const src = defaultImages[hashData % defaultImages.length];
-
       return {
         type: "image",
-        src: src,
+        src: undefined, // useCardImages 훅으로 대체
         text: textStr,
         detail
       };
@@ -302,41 +316,81 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
                 const zIndex = total - Math.floor(relativePos);
 
                 return (
-                  <div key={i} className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div
-                      onClick={() => onCardClick(card)}
-                      /* 기본 245x245 및 sm:315x315 (기준대비 70%) */
-                      className="list-card-hitbox absolute top-1/2 left-1/2 w-[245px] h-[245px] sm:w-[315px] sm:h-[315px] -ml-[122px] -mt-[122px] sm:-ml-[157px] sm:-mt-[157px] pointer-events-auto cursor-pointer"
-                      style={{
-                        transform: `translate3d(${x}px, ${y}px, ${z}px)`,
-                        zIndex: zIndex,
-                        transformStyle: "preserve-3d",
-                      }}
-                    >
-                      <div className="list-card-visual absolute inset-0 rounded-sm overflow-hidden shadow-[0_12px_36px_-9px_rgba(0,0,0,0.25)] bg-[#fdfdfc] backdrop-blur-md flex items-center justify-center border border-black/5 will-change-transform pointer-events-none">
-                        {card.type === "image" ? (
-                          <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={card.src} alt="Art" className="w-full h-full object-cover select-none block" />
-                            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent mix-blend-overlay"></div>
-                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 text-[9px] sm:text-[10px] tracking-widest font-mono text-[#1a1a1a] border border-black/5 shadow-sm">
-                              {card.detail?.cardId}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="w-full h-full p-6 sm:p-10 flex items-center justify-center bg-[#fdfdfc] text-[#2a2a2a]">
-                            <p className="text-sm sm:text-base leading-[1.8] text-justify break-keep font-serif tracking-tight">
-                              {card.text}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <ListCard
+                    key={i}
+                    card={card}
+                    x={x}
+                    y={y}
+                    z={z}
+                    zIndex={zIndex}
+                    onCardClick={onCardClick}
+                  />
                 );
               })}
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// ListView 개별 카드 컴포넌트 (썸네일 이미지 원본 비율)
+// ============================================
+const ListCard = ({
+  card, x, y, z, zIndex, onCardClick
+}: {
+  card: CardItem;
+  x: number; y: number; z: number; zIndex: number;
+  onCardClick: (card: CardItem) => void;
+}) => {
+  const { images } = useCardImages(card.detail?.cardId);
+  const thumbnailSrc = images[0]; // cardId-1 이미지 (API에서 정렬된 첫 번째)
+
+  return (
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+      <div
+        onClick={() => onCardClick(card)}
+        className="list-card-hitbox absolute top-1/2 left-1/2 pointer-events-auto cursor-pointer"
+        style={{
+          transform: `translate3d(${x}px, ${y}px, ${z}px)`,
+          zIndex,
+          transformStyle: "preserve-3d",
+          width: "245px",
+          marginLeft: "-122px",
+          marginTop: "-122px",
+        }}
+      >
+        <div
+          className="list-card-visual rounded-sm overflow-hidden shadow-[0_12px_36px_-9px_rgba(0,0,0,0.25)] bg-[#fdfdfc] flex flex-col border border-black/5 will-change-transform pointer-events-none relative"
+          style={{ width: "245px" }}
+        >
+          {card.type === "image" && thumbnailSrc ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={thumbnailSrc}
+                alt="Art"
+                className="w-full h-auto select-none block"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent mix-blend-overlay pointer-events-none" />
+              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 text-[9px] tracking-widest font-mono text-[#1a1a1a] border border-black/5 shadow-sm">
+                {card.detail?.cardId}
+              </div>
+            </>
+          ) : card.type === "image" ? (
+            // 이미지 로딩 중 플레이스홀더
+            <div className="w-full aspect-square bg-[#f0ede4] flex items-center justify-center">
+              <span className="text-[9px] font-mono text-[#1a1a1a]/30 tracking-widest">{card.detail?.cardId}</span>
+            </div>
+          ) : (
+            <div className="w-full min-h-[180px] p-6 flex items-center justify-center bg-[#fdfdfc] text-[#2a2a2a]">
+              <p className="text-sm leading-[1.8] text-justify break-keep font-serif tracking-tight">
+                {card.text}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -747,41 +801,7 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
                   {/* 모바일 전용 아코디언 — lg 이상에서는 숨김 */}
                   <AnimatePresence initial={false}>
                     {isExpanded && (
-                      <motion.div
-                        key={`accordion-${cardId}`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                        className="overflow-hidden lg:hidden border-b border-[var(--color-foreground)]/40 bg-[var(--color-foreground)]/8"
-                      >
-                        <div className="px-4 py-5 flex flex-col gap-3">
-                          {/* 제목 + ID */}
-                          <div className="pb-3 border-b border-[var(--color-foreground)]/20">
-                            <h3 className="text-base font-serif tracking-tight leading-[1.2] uppercase break-keep mb-1.5 text-[var(--color-foreground)]">
-                              {card.detail?.name}
-                            </h3>
-                            <span className="text-[9px] opacity-50 font-mono tracking-widest uppercase">
-                              ID: {card.detail?.cardId}
-                            </span>
-                          </div>
-                          {/* 메타 정보 */}
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] opacity-60 uppercase tracking-widest">
-                            {card.detail?.year && <span>{card.detail.year}</span>}
-                            {card.detail?.layer && <span>· {card.detail.layer}</span>}
-                            {card.detail?.type && <span>· {card.detail.type}</span>}
-                          </div>
-                          {/* 2025 코멘트 */}
-                          <div>
-                            <span className="block text-[9px] uppercase tracking-widest font-mono opacity-40 mb-2">
-                              2025 Retrospect
-                            </span>
-                            <p className="text-[13px] leading-[1.85] break-keep whitespace-pre-wrap font-serif text-[var(--color-foreground)] opacity-90">
-                              {card.detail?.comment || "No comment provided for this entry."}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
+                      <MobileAccordion card={card} cardId={cardId} />
                     )}
                   </AnimatePresence>
                 </React.Fragment>
@@ -792,35 +812,118 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
         </div>
 
         {/* Right Preview Section — 데스크톱 전용 */}
-        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-32 max-h-[80vh] p-6 sm:p-8 xl:p-12 overflow-y-auto custom-scrollbar hidden lg:block">
+        <div className="w-full lg:w-[350px] xl:w-[450px] flex-shrink-0 lg:sticky lg:top-32 max-h-[80vh] overflow-y-auto custom-scrollbar hidden lg:block">
           {hoveredCard ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              key={hoveredCard.detail?.cardId}
-              className="flex flex-col w-full h-full"
-            >
-              <div className="mb-6 xl:mb-8 pb-4 border-b border-[var(--color-foreground)]/40">
-                <h3 className="text-2xl xl:text-3xl font-serif tracking-tight leading-[1.2] uppercase break-keep mb-3">
-                  {hoveredCard.detail?.name}
-                </h3>
-                <span className="text-[10px] xl:text-[11px] opacity-60 font-mono tracking-widest uppercase">
-                  ID: {hoveredCard.detail?.cardId}
-                </span>
-              </div>
-              <span className="text-[10px] uppercase opacity-40 mb-4 tracking-widest font-mono block">
-                2025 Retrospect
-              </span>
-              <p className="text-sm xl:text-base leading-[1.8] xl:leading-[1.9] text-justify break-keep whitespace-pre-wrap font-serif">
-                {hoveredCard.detail?.comment || "No comment provided for this entry."}
-              </p>
-            </motion.div>
+            <IndexPreviewPanel card={hoveredCard} />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center pt-24 pb-24 lg:pt-0 lg:pb-0 opacity-20">
+            <div className="w-full h-full flex flex-col items-center justify-center p-12 opacity-20">
               <span className="text-lg xl:text-xl tracking-widest mb-4 font-mono">PREVIEW</span>
               <span className="text-[10px] font-mono uppercase tracking-widest">Hover over an item</span>
             </div>
           )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// IndexView 우측 프리뷰 패널 (이미지 + 코멘트)
+// ============================================
+const IndexPreviewPanel = ({ card }: { card: CardItem }) => {
+  const { images } = useCardImages(card.detail?.cardId);
+
+  return (
+    <motion.div
+      key={card.detail?.cardId}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col w-full p-6 sm:p-8 xl:p-10 gap-8"
+    >
+      {/* 제목 + ID */}
+      <div className="pb-4 border-b border-[var(--color-foreground)]/40">
+        <h3 className="text-2xl xl:text-3xl font-serif tracking-tight leading-[1.2] uppercase break-keep mb-2">
+          {card.detail?.name}
+        </h3>
+        <span className="text-[10px] xl:text-[11px] opacity-60 font-mono tracking-widest uppercase">
+          ID: {card.detail?.cardId}
+        </span>
+      </div>
+
+      {/* 이미지 수직 1열 */}
+      {images.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <span className="text-[9px] uppercase tracking-widest font-mono opacity-40">Images</span>
+          {images.map((src) => (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img key={src} src={src} alt="" className="w-full h-auto object-contain" style={{ display: "block" }} />
+          ))}
+        </div>
+      )}
+
+      {/* 2025 코멘트 */}
+      <div>
+        <span className="text-[9px] uppercase opacity-40 tracking-widest font-mono block mb-3">
+          2025 Retrospect
+        </span>
+        <p className="text-sm xl:text-base leading-[1.8] xl:leading-[1.9] break-keep whitespace-pre-wrap font-serif">
+          {card.detail?.comment || "No comment provided for this entry."}
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// 모바일 아코디언 (이미지 + 코멘트)
+// ============================================
+const MobileAccordion = ({ card, cardId }: { card: CardItem; cardId: string }) => {
+  const { images } = useCardImages(card.detail?.cardId);
+
+  return (
+    <motion.div
+      key={`accordion-${cardId}`}
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+      className="overflow-hidden lg:hidden border-b border-[var(--color-foreground)]/40"
+      style={{ backgroundColor: "rgba(234, 221, 188, 0.08)" }}
+    >
+      <div className="px-4 py-5 flex flex-col gap-4">
+        {/* 제목 + ID */}
+        <div className="pb-3 border-b border-[var(--color-foreground)]/20">
+          <h3 className="text-base font-serif tracking-tight leading-[1.2] uppercase break-keep mb-1.5 text-[var(--color-foreground)]">
+            {card.detail?.name}
+          </h3>
+          <span className="text-[9px] opacity-50 font-mono tracking-widest uppercase">
+            ID: {card.detail?.cardId}
+          </span>
+        </div>
+        {/* 메타 */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] opacity-60 uppercase tracking-widest">
+          {card.detail?.year && <span>{card.detail.year}</span>}
+          {card.detail?.layer && <span>· {card.detail.layer}</span>}
+          {card.detail?.type && <span>· {card.detail.type}</span>}
+        </div>
+        {/* 이미지 */}
+        {images.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-[9px] uppercase tracking-widest font-mono opacity-40">Images</span>
+            {images.map((src) => (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img key={src} src={src} alt="" className="w-full h-auto object-contain" style={{ display: "block" }} />
+            ))}
+          </div>
+        )}
+        {/* 2025 코멘트 */}
+        <div>
+          <span className="block text-[9px] uppercase tracking-widest font-mono opacity-40 mb-2">
+            2025 Retrospect
+          </span>
+          <p className="text-[13px] leading-[1.85] break-keep whitespace-pre-wrap font-serif text-[var(--color-foreground)] opacity-90">
+            {card.detail?.comment || "No comment provided for this entry."}
+          </p>
         </div>
       </div>
     </motion.div>
