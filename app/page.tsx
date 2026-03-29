@@ -39,16 +39,16 @@ const pseudoRandom = (seed: number) => {
 // ============================================
 // 컬러 블록용 개별 컴포넌트 (프로시미티 효과 로직 처리)
 // ============================================
-const ColorBlockCard = ({ 
-  card, 
-  mouseX, 
-  mouseY, 
+const ColorBlockCard = ({
+  card,
+  mouseX,
+  mouseY,
   onCardClick,
   height
-}: { 
-  card: CardItem, 
-  mouseX: any, 
-  mouseY: any, 
+}: {
+  card: CardItem,
+  mouseX: any,
+  mouseY: any,
   onCardClick: (v: CardItem) => void,
   height: string
 }) => {
@@ -56,7 +56,7 @@ const ColorBlockCard = ({
   const thumbnailSrc = images[0]; // cardId-1 이미지
 
   const [avgColor, setAvgColor] = useState<string>("#fdfdfc");
-  
+
   const cardRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ x: 0, y: 0, w: 0, h: 0 });
 
@@ -95,14 +95,14 @@ const ColorBlockCard = ({
         });
       }
     };
-    
+
     updateBox();
-    
+
     const observer = new ResizeObserver(updateBox);
     if (cardRef.current) {
       observer.observe(cardRef.current);
     }
-    
+
     window.addEventListener("resize", updateBox);
     return () => {
       window.removeEventListener("resize", updateBox);
@@ -227,7 +227,7 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const y = window.scrollY;
-          
+
           // 위 혹은 아래 극단에 닿을 경우 시각적 차이가 없는 위치(cycleHeight 배수 단위)로 리셋합니다.
           if (y < cycleHeight * 10) {
             window.scrollTo({ top: y + cycleHeight * 50, behavior: "instant" });
@@ -244,14 +244,15 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
 
     window.scrollTo({ top: midPoint, behavior: "instant" });
     setScrollY(midPoint);
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [cardsData]);
 
   return (
     <div className="relative w-full text-foreground max-w-[100vw] overflow-x-hidden bg-[#faf9f6]" style={{ height: "300000px" }}>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .list-card-hitbox {
           transition: z-index 0s 0.6s;
         }
@@ -288,25 +289,25 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
                 const total = cardsData.length;
                 // 스크롤양 기반 무한 위치 진행도 (기존 150에서 스케일 다운에 맞춰 120으로)
                 const offset = scrollY / 120;
-                
+
                 // 음수를 처리하는 안정적 모듈로 연산: 연속적인 소수점이 유지됨.
                 let relativePos = (i + offset) % total;
                 if (relativePos < 0) relativePos += total;
 
                 // 70% 스케일에 맞춘 카드 간의 절대 거리(밀도)
-                const distance = 135; 
-                
+                const distance = 135;
+
                 // 브라우저의 가로/세로 길이를 통해 좌하단-우상단까지의 완벽한 대각선 라인 각도(theta) 도출
                 // h: 0일 경우(마운트 전)를 대비한 방어코드
                 const w = windowSize.w || 1920;
                 const h = windowSize.h || 1080;
-                const theta = Math.atan2(-h, w); 
-                
+                const theta = Math.atan2(-h, w);
+
                 // 삼각 함수로 대각선 벡터 구하기
                 const gapX = distance * Math.cos(theta); // 양수 (+)
                 const gapY = distance * Math.sin(theta); // 음수 (-)
                 const gapZ = -315; // 깊이감(Z축)은 고정
-                
+
                 // 진행도를 0~n에서 -n/2 ~ +n/2로 옮겨서, 화면 정중앙(0,0)을 대각선 궤적의 중심축으로 만듭니다.
                 // relativePos는 음수를 포함한 실수형이 유지되므로 부드러운 이동이 보장됩니다.
                 const centeredPos = relativePos - (total / 2);
@@ -422,7 +423,7 @@ const MoodboardView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCa
   if (!isMounted) return null;
 
   return (
-    <div 
+    <div
       onMouseMove={(e) => {
         // e.pageY는 문서 전체 픽셀 기준 절대 스크롤 높이이며 화면상의 모든 중첩 요소를 포함합니다.
         // 리랙트된 ColorBlockCard 의 bounds.top + window.scrollY 값과 정확히 호환됩니다.
@@ -438,13 +439,13 @@ const MoodboardView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCa
           // 일정한 인덱스를 시드로 활용해 무작위하지만 고정된 높이를 배정합니다.
           // 최소 250px부터 최대 550px까지 에디토리얼한 가변 높이를 만듭니다.
           const hNum = pseudoRandom(i * 100 + 10);
-          const rHeight = 200 + (hNum * 300); 
-          
+          const rHeight = 200 + (hNum * 300);
+
           return (
-            <ColorBlockCard 
-              key={card.detail?.cardId || i} 
-              card={card} 
-              mouseX={mouseX} 
+            <ColorBlockCard
+              key={card.detail?.cardId || i}
+              card={card}
+              mouseX={mouseX}
               mouseY={mouseY}
               onCardClick={onCardClick}
               height={`${rHeight}px`}
@@ -507,32 +508,32 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
   const senX = useTransform(scrollYProgress, [0, 0.75, 1], [-distance, 0, ceWidth]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="w-full bg-[--color-background] text-[--color-foreground] relative flex flex-col"
     >
       <div ref={containerRef} className="w-full h-[300vh] relative z-0">
-        <div className="sticky top-0 left-0 w-full h-[100dvh] flex flex-col justify-start px-6 sm:px-12 pt-10 sm:pt-16 overflow-hidden bg-transparent">
-          
+        <div className="sticky top-0 left-0 w-full h-[100dvh] flex flex-col justify-start px-6 sm:px-12 pt-16 sm:pt-8 overflow-hidden bg-transparent">
+
           <div className="w-full flex justify-between items-start z-10 pointer-events-none text-[var(--color-foreground)]">
-            <div className="flex flex-col gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] tracking-[0.25em] font-light uppercase opacity-80 pt-1 leading-tight sm:leading-tight">
+            <div className="flex flex-col gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] tracking-[0.25em] font-light uppercase pt-1 leading-tight sm:leading-tight">
               <span>ENCYCLOPEDIA OF SEOHEE&apos;S</span>
               <span>TEN-YEAR LIFE SENSATIONS</span>
             </div>
-            <div className="flex flex-col items-end gap-1.5 sm:gap-2 pr-1 leading-tight sm:leading-tight">
-              <span className="text-[10px] sm:text-[11px] tracking-[0.3em] font-light opacity-60">
+            <div className="flex flex-col items-end gap-0.5 sm:gap-1 pr-1 leading-tight sm:leading-tight">
+              <span className="text-[10px] sm:text-[11px] tracking-[0.3em] font-light">
                 ( 2014 - 2024 )
               </span>
-              <span className="text-[11px] sm:text-xs tracking-[0.3em] font-light opacity-80 mt-0.5">
+              <span className="text-[11px] sm:text-xs tracking-[0.3em] font-light">
                 백감사전
               </span>
             </div>
           </div>
 
-          <div className="w-full h-[10vh] sm:h-[12vh]"></div> {/* 여백 조정 */}
+          <div className="flex-1"></div> {/* 여백 조정 */}
 
           {/* 거대 타이포그래피 (화면 상단 영역에 밀착) */}
-          <div 
+          <div
             className="w-full flex flex-col font-serif transition-opacity duration-300"
             style={{ opacity: isReady ? 1 : 0 }}
           >
@@ -541,22 +542,22 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
               <motion.div ref={senRef} style={{ x: senX }} className="select-none">
                 SEN
               </motion.div>
-              <motion.div 
-                ref={ceRef} 
+              <motion.div
+                ref={ceRef}
                 initial={{ opacity: 0 }}
                 animate={
                   ceBlinkState === "initial" ? { opacity: 0 } :
-                  ceBlinkState === "blinking" ? { opacity: [0, 1, 0, 1, 0] } :
-                  { opacity: 0 }
+                    ceBlinkState === "blinking" ? { opacity: [0, 1, 0, 1, 0] } :
+                      { opacity: 0 }
                 }
                 transition={
-                  ceBlinkState === "blinking" ? { duration: 0.6, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" } : 
-                  { duration: 0 }
+                  ceBlinkState === "blinking" ? { duration: 0.6, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" } :
+                    { duration: 0 }
                 }
                 onAnimationComplete={() => {
                   if (ceBlinkState === "blinking") setCeBlinkState("hidden");
                 }}
-                className="text-[#A6E8F7] italic select-none"
+                className="text-[#659fff] italic select-none"
               >
                 CE
               </motion.div>
@@ -567,6 +568,7 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
                 <span key={i} className="select-none">{letter}</span>
               ))}
             </div>
+          <div className="w-full h-[20vh]"></div>
           </div>
 
           <div className="absolute bottom-6 left-0 w-full flex justify-center text-center z-10 opacity-30 pointer-events-none">
@@ -577,7 +579,7 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
 
         </div>
       </div>
-      
+
       {/* 300vh 스크롤 이후 슬라이드업 되는 NOTE 색션 */}
       <NoteSection />
 
@@ -590,11 +592,11 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
 // ============================================
 const NavigationFooter = ({ viewMode, onNavigate }: { viewMode: string, onNavigate: (mode: any) => void }) => {
   return (
-    <div 
+    <div
       className="fixed bottom-0 left-0 w-full flex justify-center items-center px-6 sm:px-12 z-[10000] py-6 sm:py-8 bg-[var(--color-background)]/90 backdrop-blur-md border-t border-[var(--color-foreground)]/10 text-[var(--color-foreground)] transition-all duration-700"
     >
       <div className="flex flex-wrap justify-between sm:justify-center items-center gap-6 sm:gap-24 w-full max-w-5xl">
-        <button 
+        <button
           onClick={() => {
             if (viewMode !== 'landing') onNavigate("landing");
             setTimeout(() => {
@@ -606,21 +608,21 @@ const NavigationFooter = ({ viewMode, onNavigate }: { viewMode: string, onNaviga
           <span className="text-[8px] sm:text-[10px] tracking-[0.1em]">( I )</span>
           <span className={`text-[10px] sm:text-xs tracking-[0.2em] uppercase border-b pb-0.5 ${viewMode === 'note' ? 'border-current' : 'border-transparent group-hover:border-current transition-colors'}`}>Note</span>
         </button>
-        <button 
+        <button
           onClick={() => onNavigate("list")}
           className={`group flex flex-col sm:flex-row items-center gap-1 sm:gap-3 transition-opacity ${viewMode === 'list' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
         >
           <span className="text-[8px] sm:text-[10px] tracking-[0.1em]">( II )</span>
           <span className={`text-[10px] sm:text-xs tracking-[0.2em] uppercase border-b pb-0.5 ${viewMode === 'list' ? 'border-current' : 'border-transparent group-hover:border-current transition-colors'}`}>List</span>
         </button>
-        <button 
+        <button
           onClick={() => onNavigate("moodboard")}
           className={`group flex flex-col sm:flex-row items-center gap-1 sm:gap-3 transition-opacity ${viewMode === 'moodboard' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
         >
           <span className="text-[8px] sm:text-[10px] tracking-[0.1em]">( III )</span>
           <span className={`text-[10px] sm:text-xs tracking-[0.2em] uppercase border-b pb-0.5 ${viewMode === 'moodboard' ? 'border-current' : 'border-transparent group-hover:border-current transition-colors'}`}>Board</span>
         </button>
-        <button 
+        <button
           onClick={() => onNavigate("index")}
           className={`group flex flex-col sm:flex-row items-center gap-1 sm:gap-3 transition-opacity ${viewMode === 'index' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
         >
@@ -638,22 +640,22 @@ const NavigationFooter = ({ viewMode, onNavigate }: { viewMode: string, onNaviga
 
 function NoteSection() {
   return (
-    <div id="note-section" className="relative z-10 w-full min-h-[100dvh] bg-[var(--color-foreground)] text-[var(--color-background)] px-6 sm:px-12 pt-16 pb-32 sm:pt-24 sm:pb-48 flex flex-col justify-center items-center">
-      <div className="w-full flex justify-between tracking-widest text-[10px] sm:text-xs opacity-50 uppercase mb-16 sm:mb-24 mt-8 sm:mt-12">
+    <div id="note-section" className="relative z-10 w-full min-h-[100dvh] bg-[var(--color-foreground)] text-[var(--color-background)] px-6 sm:px-12 pt-16 pb-16 sm:pt-8 sm:pb-8 flex flex-col justify-center items-center">
+      <div className="w-full flex justify-between tracking-widest text-[10px] sm:text-xs uppercase mb-8 sm:mb-12">
         <span>Chapter 1</span>
         <span>Sencyclopedia Note</span>
       </div>
 
-      <div className="w-full flex flex-col gap-24 sm:gap-32">
-        
+      <div className="w-full flex flex-col gap-24 sm:gap-6">
+
         {/* 인용구 영역 (화면을 가득 채우는 거대 서체) */}
-        <div className="flex flex-col gap-8 w-full">
+        <div className="flex flex-col gap-4 w-full">
           <h2 className="text-[7vw] sm:text-[5vw] leading-[1.15] font-serif tracking-tight break-keep text-left" style={{ wordBreak: 'keep-all' }}>
             “그러니까 그녀는 — 그녀의 깊은 생각 속으로 내려가려고 하지 않는다면 어떤 사람인지 분류할 수 없는데, 그녀가 너무도 재미없는 사람이어서 누구도 그런 생각은 하지 않는다 — 그러니까 묵묵히 모험을 겪었던 한 여인이었다. 이상하게도 영적인 모험을 살고 있었던 것이다.”
           </h2>
           <div className="flex flex-col w-full">
             <div className="flex justify-start sm:justify-end pt-2 sm:pt-4 w-full">
-              <span className="text-[13px] sm:text-[14px] tracking-[0.1em] font-light opacity-80">
+              <span className="text-[13px] sm:text-[14px] tracking-[0.1em] font-light">
                 ‘먼 바다로 떠난 이야기’ 중, &lt;세상의 발견&gt;, 클라리시 리스펙토르
               </span>
             </div>
@@ -666,7 +668,7 @@ function NoteSection() {
         </div>
 
         {/* 본문 편지 영역 */}
-        <div className="flex flex-col gap-8 text-sm sm:text-base leading-[1.8] break-keep max-w-2xl mx-auto w-full font-serif pb-12 mt-12 sm:mt-0 text-center items-center">
+        <div className="flex-1 text-center items-center leading-8">
           <p>
             나는 언제나 투명하게 들여다보이고 싶은(1) 동시에 그것을 두려워했다.
           </p>
@@ -679,15 +681,16 @@ function NoteSection() {
           <p>
             모두의 묵묵한 모험이 계속 되길 바라며.
           </p>
-          <div className="w-full mt-8">
+          <div className="flex flex-col gap-1 mt-4">
+            <span>2025. 04. 20.</span>
+            <span>서희</span>
+          </div>
+          <div className="w-full mt-4">
             <p>
               (1) 김복희, 『희망은 사랑을 한다』 시인의 말 "나는 아주 투명하게 들여다보이고 싶다." 꽤 오래 나의 SNS 프로필 소개글이었다.
             </p>
           </div>
-          <div className="flex flex-col gap-1 mt-8">
-            <span>2025. 04. 20.</span>
-            <span>서희</span>
-          </div>
+          <div className="w-full h-[20vh]"></div>
         </div>
 
       </div>
@@ -697,7 +700,7 @@ function NoteSection() {
 
 const NoteView = () => {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="w-full bg-[var(--color-background)]"
     >
@@ -722,7 +725,7 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -738,8 +741,8 @@ const IndexView = ({ cardsData }: { cardsData: CardItem[] }) => {
             * a curated collection of sensory data → including images, text, ideas, and memories *
           </p>
           <div className="text-[9px] sm:text-[10px] tracking-widest text-right font-mono opacity-60">
-            ┌ LEGEND<br/>
-            ■ IMG / MIX<br/>
+            ┌ LEGEND<br />
+            ■ IMG / MIX<br />
             ○ TXT
           </div>
         </div>
@@ -939,7 +942,7 @@ const MobileAccordion = ({ card, cardId }: { card: CardItem; cardId: string }) =
 export default function Home() {
   const [viewMode, setViewMode] = useState<"landing" | "list" | "moodboard" | "note" | "index">("landing");
   const [selectedCard, setSelectedCard] = useState<CardItem | null>(null);
-  
+
   // 방대한 카드를 원하셨으므로 CSV 데이터 전체를 매핑합니다.
   const cardsData = useMemo(() => generateCards(), []);
 
@@ -947,7 +950,7 @@ export default function Home() {
     <>
       {/* 랜딩 뷰가 아닐 때만 상단 로고(홈버튼) 렌더링 */}
       {viewMode !== 'landing' && (
-        <div 
+        <div
           className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => setViewMode("landing")}
         >
@@ -964,11 +967,11 @@ export default function Home() {
       <NavigationFooter viewMode={viewMode} onNavigate={setViewMode} />
 
       {viewMode === "landing" && <LandingView onNavigate={setViewMode} />}
-      
+
       {viewMode === "list" && (
         <ListView cardsData={cardsData} onCardClick={setSelectedCard} />
       )}
-      
+
       {viewMode === "moodboard" && (
         <MoodboardView cardsData={cardsData} onCardClick={setSelectedCard} />
       )}
@@ -982,9 +985,9 @@ export default function Home() {
       {/* 모달 애니메이션 관리 */}
       <AnimatePresence>
         {selectedCard && (
-          <DetailModal 
-            detail={selectedCard.detail} 
-            onClose={() => setSelectedCard(null)} 
+          <DetailModal
+            detail={selectedCard.detail}
+            onClose={() => setSelectedCard(null)}
           />
         )}
       </AnimatePresence>
