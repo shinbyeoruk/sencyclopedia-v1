@@ -148,7 +148,7 @@ const ColorBlockCard = ({
           <div className="w-full bg-[#f0ede4]" style={{ height }} />
         ) : (
           <div className="w-full p-4 flex items-center justify-center bg-[#fdfdfc] border border-[--color-background]/10" style={{ height }}>
-            <p className="text-[--color-background] font-serif text-[10px] md:text-sm leading-relaxed text-justify break-keep pointer-events-none select-none">
+            <p className="text-[#4e0000] font-serif text-[10px] md:text-sm leading-relaxed text-justify break-keep pointer-events-none select-none">
               {card.text ? (card.text.length > 50 ? card.text.slice(0, 50) + "..." : card.text) : ""}
             </p>
           </div>
@@ -197,6 +197,12 @@ const generateCards = () => {
         detail
       };
     }
+  }).sort((a, b) => {
+    // 연도 내림차순 (2025 → 2013)
+    const yearDiff = Number(b.detail?.year || 0) - Number(a.detail?.year || 0);
+    if (yearDiff !== 0) return yearDiff;
+    // 같은 연도면 번호 오름차순
+    return Number(a.detail?.number || 0) - Number(b.detail?.number || 0);
   });
 };
 
@@ -256,14 +262,40 @@ const MobileCard = ({
       className="absolute inset-0 flex flex-col px-6 pt-10 pb-28"
       style={{ touchAction: "pan-y" }}
     >
-      {/* 상단: card ID */}
-      <span className="text-[9px] tracking-[0.22em] font-mono text-[var(--color-foreground)] uppercase opacity-40 mb-6 block select-none">
-        {card.detail?.cardId}
-      </span>
+      {/* 상단: card ID (좌) + view 힌트 (우) — 같은 높이 */}
+      <div className="flex items-center justify-between mb-6">
+        <span className="text-[9px] tracking-[0.22em] font-mono text-[var(--color-foreground)] uppercase opacity-40 select-none">
+          {card.detail?.cardId}
+        </span>
+
+        {thumbnailSrc && (
+          <motion.div
+            className="flex items-center gap-1 pointer-events-none select-none"
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: [0.85, 0.85, 0.2] }}
+            transition={{ duration: 2.2, times: [0, 0.5, 1], ease: "easeOut", delay: 0.3 }}
+          >
+            <svg
+              width="13" height="13" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="1.6"
+              strokeLinecap="round" strokeLinejoin="round"
+              className="text-[var(--color-foreground)]"
+            >
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+            <span className="text-[8px] font-mono tracking-[0.18em] uppercase text-[var(--color-foreground)]">
+              view
+            </span>
+          </motion.div>
+        )}
+      </div>
 
       {/* 이미지 영역 — 원본 비율, 화면 중앙 */}
       <div
-        className="flex-1 flex items-center justify-center overflow-hidden relative"
+        className="flex-1 flex items-center justify-center overflow-hidden"
         onClick={thumbnailSrc ? onOpenModal : undefined}
         style={{ cursor: thumbnailSrc ? "pointer" : "default" }}
       >
@@ -285,32 +317,6 @@ const MobileCard = ({
           <div className="w-full h-40 bg-[var(--color-foreground)]/8 flex items-center justify-center">
             <span className="text-[10px] font-mono opacity-20 tracking-widest text-[var(--color-foreground)]">NO IMAGE</span>
           </div>
-        )}
-
-        {/* 탭 힌트 아이콘 — 이미지 우측 하단, 처음엔 선명하게 후 페이드 */}
-        {thumbnailSrc && (
-          <motion.div
-            className="absolute bottom-2 right-2 flex items-center gap-1 pointer-events-none select-none"
-            initial={{ opacity: 0.85 }}
-            animate={{ opacity: [0.85, 0.85, 0.2] }}
-            transition={{ duration: 2.2, times: [0, 0.5, 1], ease: "easeOut", delay: 0.3 }}
-          >
-            {/* expand / view 아이콘 (SVG inline) */}
-            <svg
-              width="13" height="13" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="1.6"
-              strokeLinecap="round" strokeLinejoin="round"
-              className="text-[var(--color-foreground)]"
-            >
-              <polyline points="15 3 21 3 21 9" />
-              <polyline points="9 21 3 21 3 15" />
-              <line x1="21" y1="3" x2="14" y2="10" />
-              <line x1="3" y1="21" x2="10" y2="14" />
-            </svg>
-            <span className="text-[8px] font-mono tracking-[0.18em] uppercase text-[var(--color-foreground)]">
-              view
-            </span>
-          </motion.div>
         )}
       </div>
 
@@ -447,7 +453,7 @@ const ListView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCardCli
   }, [cardsData]);
 
   return (
-    <div className="relative w-full text-foreground max-w-[100vw] overflow-x-hidden bg-[#faf9f6]" style={{ height: "300000px" }}>
+    <div className="relative w-full text-foreground max-w-[100vw] overflow-x-hidden bg-[#FCDE76]" style={{ height: "300000px" }}>
       <style dangerouslySetInnerHTML={{
         __html: `
         .list-card-hitbox {
@@ -678,7 +684,7 @@ const MobileScrollCard = ({
         <div className="w-full aspect-[3/4] bg-[#f0ede4]" />
       ) : (
         <div className="w-full p-4 bg-[#fdfdfc] flex items-start" style={{ minHeight: "100px" }}>
-          <p className="text-[11px] font-serif leading-[1.75] text-[#1a1a1a] break-keep line-clamp-5">
+          <p className="text-[11px] font-serif leading-[1.75] text-[#4e0000] break-keep line-clamp-5">
             {card.text}
           </p>
         </div>
@@ -706,7 +712,7 @@ const MobileMoodboardView = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full min-h-screen bg-[#f7f4e9] pt-16 pb-28 px-1.5"
+      className="w-full min-h-screen bg-[#E9F056] pt-28 pb-28 px-1.5"
     >
       <div className="flex gap-1.5 items-start">
         {/* 왼쪽 열 */}
@@ -760,7 +766,7 @@ const MoodboardView = ({ cardsData, onCardClick }: { cardsData: CardItem[], onCa
         mouseX.set(e.pageX);
         mouseY.set(e.pageY);
       }}
-      className="moodboard-container bg-[#f7f4e9] w-full min-h-[100vh] py-20 px-4 sm:px-8 md:px-12 pb-32"
+      className="moodboard-container bg-[#E9F056] w-full min-h-[100vh] pt-32 pb-32 px-4 sm:px-8 md:px-12"
     >
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: "url('/analog_art_1.png')", backgroundSize: "cover", mixBlendMode: "multiply" }} />
 
@@ -887,7 +893,7 @@ const LandingView = ({ onNavigate }: { onNavigate: (mode: "list" | "moodboard" |
                 onAnimationComplete={() => {
                   if (ceBlinkState === "blinking") setCeBlinkState("hidden");
                 }}
-                className="text-[#659fff] italic select-none"
+                className="text-[#E9F056] italic select-none"
               >
                 CE
               </motion.div>
@@ -1293,12 +1299,20 @@ export default function Home() {
           className="fixed top-6 left-1/2 -translate-x-1/2 z-[10000] cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => setViewMode("landing")}
         >
-          <h2
-            className={`text-lg sm:text-xl tracking-[0.2em] uppercase select-none ${viewMode === 'index' ? 'text-[#f7f4e9]' : 'text-[#4A151C]'}`}
-            style={{ fontFamily: "'Playfair Display SC Bold', serif" }}
-          >
-            SENCYCLOPEDIA
-          </h2>
+          <div
+            className="w-10 sm:w-12 h-10 sm:h-12 transition-colors duration-300"
+            style={{
+              backgroundColor: (viewMode === 'index' || (viewMode === 'list' && isMobile)) ? '#FCDE76' : '#4e0000',
+              maskImage: 'url(/miro.png)',
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskImage: 'url(/miro.png)',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+            }}
+          />
         </div>
       )}
 

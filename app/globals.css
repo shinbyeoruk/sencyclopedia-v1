@@ -24,7 +24,7 @@
 @theme {
   --color-background: #4e0000;
   --color-foreground: #FCDE76;
-  --color-accent: #659fff;
+  --color-accent: #E9F056;
 
   /* 오직 유저가 지정한 로컬 폰트만 유지합니다 (정갈한 Regular 텍스트 베이스) */
   --font-sans: "Playfair Display SC Regular", "Hahmlet Local";
@@ -63,5 +63,5 @@
 :root {
   --background: #4e0000;
   --foreground: #FCDE76;
-  --accent: #659fff;
+  --accent: #E9F056;
 }

@@ -109,16 +109,15 @@ export default function DetailModal({ detail, onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      className="fixed inset-0 z-[99999] flex items-end justify-center bg-black/20 backdrop-blur-[2px] sm:px-12 pt-12"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 sm:p-12"
     >
       <motion.div
-        initial={{ y: "100%", scale: 0.8 }}
-        animate={{ y: 0, scale: 0.8 }}
-        exit={{ y: "100%", scale: 0.8 }}
-        transition={{ type: "spring", damping: 28, stiffness: 220 }}
-        style={{ transformOrigin: "bottom center" }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1440px] h-[85vh] sm:h-[90vh] bg-[#f7f4e9] text-[#1a1a1a] shadow-[0_-10px_60px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col rounded-t-lg sm:rounded-t-xl"
+        className="relative w-full max-w-[1000px] h-[85vh] sm:h-[80vh] bg-[#f7f4e9] text-[#1a1a1a] shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col rounded-lg sm:rounded-2xl"
       >
         {/* 상단 닫기 헤더 */}
         <div className="flex justify-between items-center px-6 sm:px-10 py-5 sm:py-6 border-b border-[#1a1a1a]/10 shrink-0">
